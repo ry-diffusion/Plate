@@ -30,17 +30,14 @@ struct DeviceHeaderView: View {
 
             Spacer(minLength: 16)
 
-            // Mesmo desenho da status bar: torre, bateria em pontos e rede.
-            HStack(spacing: 5) {
-                Image(systemName: "cellularbars", variableValue: Double(device.signalBars) / 4)
-                if showBattery {
-                    // Sem porcentagem: o iPhone só anuncia a bateria em quartos.
-                    Image(nsImage: device.batteryGlyph(height: 12))
+            // Mesmo desenho da status bar: torre (com a bateria embaixo) e rede.
+            HStack(spacing: 6) {
+                if let glyph = device.signalGlyph(pointSize: 15, showBattery: showBattery) {
+                    Image(nsImage: glyph)
                         .renderingMode(.template)
-                        .foregroundStyle(device.isBatteryLow ? .red : .primary)
-                        .accessibilityLabel("Bateria \(device.batteryQuarters) de 4")
                 }
                 Text(device.networkLabel)
+                    .fontWeight(.bold)
             }
             .font(.system(size: 13, weight: .medium))
         }

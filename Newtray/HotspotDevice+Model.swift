@@ -36,27 +36,50 @@ extension HotspotDevice {
         min(max(Int((Double(batteryLevel) / 25).rounded()), 0), 4)
     }
 
-    /// Bateria do iPhone como 4 pontos em coluna, acesos de baixo pra cima
-    /// conforme os quartos. Os apagados ficam esmaecidos, como as barras
-    /// inativas da torre.
+    /// Torre de sinal com, opcionalmente, a bateria do iPhone como 4 pontos em
+    /// fileira embaixo (um sob cada barra), acesos da esquerda pra direita
+    /// conforme os quartos. Sem porcentagem: o iPhone só anuncia a bateria em
+    /// quartos.
     ///
-    /// Desenhado com `labelColor` na hora do desenho, então acompanha a
-    /// aparência de onde estiver (o título do NSStatusBarButton não pinta
-    /// imagens template dentro de text attachments).
-    func batteryGlyph(height: CGFloat) -> NSImage {
-        // 4 pontos de 20% da altura com 3 vãos iguais (~0,8pt em 12,5pt).
-        let dot = height * 0.2
-        let gap = (height - dot * 4) / 3
+    /// Com `canvasHeight` (a altura do botão da status bar), a torre fica
+    /// sempre no centro, com ou sem bateria, e os pontos usam o espaço que
+    /// sobra embaixo. `verticalOffset` sobe a torre (em pontos) pra acertar o
+    /// centro óptico com os outros itens. Sem `canvasHeight`, a imagem fica
+    /// justa (pra usar no menu).
+    /// Imagem template: quem pinta é a menu bar.
+    func signalGlyph(pointSize: CGFloat, showBattery: Bool, trailingPadding: CGFloat = 0,
+                     canvasHeight: CGFloat? = nil, verticalOffset: CGFloat = 0) -> NSImage? {
+        let config = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .regular)
+        guard let bars = NSImage(systemSymbolName: "cellularbars", variableValue: Double(signalBars) / 4,
+                                 accessibilityDescription: nil)?.withSymbolConfiguration(config) else { return nil }
+
+        // Em 15pt: pontos de 2pt a 1pt da torre. O botão da status bar corta
+        // ~1,5pt da base da imagem, então não dá pra ser maior que isso.
+        let dot = (pointSize * 0.135).rounded()
+        let spacing = (pointSize / 15).rounded()
+        let compactHeight = bars.size.height + (showBattery ? dot + spacing : 0)
+        let height = max(canvasHeight ?? compactHeight, compactHeight)
+        let barsY = canvasHeight == nil
+            ? height - bars.size.height
+            : ((height - bars.size.height) / 2).rounded() + verticalOffset
+        let dotsY = barsY - spacing - dot
         let filled = batteryQuarters
-        let image = NSImage(size: NSSize(width: dot, height: height), flipped: false) { _ in
+
+        let image = NSImage(size: NSSize(width: bars.size.width + trailingPadding, height: height), flipped: false) { _ in
+            bars.draw(in: NSRect(x: 0, y: barsY, width: bars.size.width, height: bars.size.height))
+            guard showBattery else { return true }
+            let column = bars.size.width / 4
             for index in 0..<4 {
-                let color = index < filled ? NSColor.labelColor : NSColor.labelColor.withAlphaComponent(0.3)
-                color.setFill()
-                NSBezierPath(ovalIn: NSRect(x: 0, y: CGFloat(index) * (dot + gap), width: dot, height: dot)).fill()
+                NSColor.black.withAlphaComponent(index < filled ? 1 : 0.3).setFill()
+                let x = column * (CGFloat(index) + 0.5) - dot / 2
+                NSBezierPath(ovalIn: NSRect(x: x, y: dotsY, width: dot, height: dot)).fill()
             }
             return true
         }
-        image.accessibilityDescription = "Bateria do iPhone: \(filled) de 4"
+        image.isTemplate = true
+        image.accessibilityDescription = showBattery
+            ? "Sinal \(signalBars) de 4, bateria do iPhone \(filled) de 4"
+            : "Sinal \(signalBars) de 4"
         return image
     }
 

@@ -38,6 +38,9 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     /// Tamanho do símbolo, escolhido pra igualar a altura dos ícones do sistema
     /// (bateria, Control Center). O padrão do NSStatusItem seria 13pt.
     private static let symbolPointSize: CGFloat = 15
+    /// Respiro extra à direita da torre pra dar 6pt entre a torre e o "5G" (o
+    /// botão já põe ~5pt entre a imagem e o título; medido na tela).
+    private static let titleSpacing: CGFloat = 0.5
 
     private let monitor: HotspotMonitor
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -79,36 +82,27 @@ final class StatusItemController: NSObject, NSMenuDelegate {
             button.attributedTitle = NSAttributedString()
             return
         }
-        button.image = showBars ? symbol("cellularbars", variableValue: Double(device.signalBars) / 4) : nil
-        button.attributedTitle = title(network: showNetwork ? device.networkLabel : nil,
-                                       battery: showBattery ? device : nil)
+        if showBars {
+            button.image = device.signalGlyph(pointSize: Self.symbolPointSize, showBattery: showBattery,
+                                              trailingPadding: showNetwork ? Self.titleSpacing : 0,
+                                              canvasHeight: NSStatusBar.system.thickness,
+                                              // Alinha o centro da torre com o do Wi-Fi do sistema (medido na tela).
+                                              verticalOffset: 0.5)
+        } else {
+            button.image = nil
+        }
+        button.attributedTitle = showNetwork ? title(device.networkLabel) : NSAttributedString()
         button.toolTip = "\(device.name): \(device.networkLabel), sinal \(device.signalBars)/4, bateria \(device.batteryQuarters)/4"
     }
 
-    /// Título nativo do botão: "⁞ 5G", logo depois da torre. A bateria vai como
-    /// 4 pontos, sem porcentagem, porque o iPhone só anuncia o nível em quartos.
-    private func title(network: String?, battery device: HotspotDevice?) -> NSAttributedString {
-        let font = NSFont.menuBarFont(ofSize: 0)
+    /// "5G" em bold, na fonte da menu bar.
+    private func title(_ text: String) -> NSAttributedString {
+        let size = NSFont.menuBarFont(ofSize: 0).pointSize
         // O título padrão do botão fica 0,5pt abaixo do texto do relógio.
-        let attributes: [NSAttributedString.Key: Any] = [.font: font, .baselineOffset: 0.5]
-        let title = NSMutableAttributedString()
-        if let device {
-            // Mesma altura da torre (~12,5pt).
-            let glyph = device.batteryGlyph(height: 12.5)
-            let attachment = NSTextAttachment()
-            attachment.image = glyph
-            // Alinha os pontos com a base e o topo da torre.
-            attachment.bounds = CGRect(x: 0, y: (font.capHeight - glyph.size.height) / 2,
-                                       width: glyph.size.width, height: glyph.size.height)
-            title.append(NSAttributedString(attachment: attachment))
-        }
-        if let network {
-            if title.length > 0 {
-                title.append(NSAttributedString(string: " ", attributes: attributes))
-            }
-            title.append(NSAttributedString(string: network, attributes: attributes))
-        }
-        return title
+        return NSAttributedString(string: text, attributes: [
+            .font: NSFont.systemFont(ofSize: size, weight: .bold),
+            .baselineOffset: 0.5,
+        ])
     }
 
     private func symbol(_ name: String, variableValue: Double? = nil) -> NSImage? {

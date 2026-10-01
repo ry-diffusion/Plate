@@ -5,16 +5,17 @@ App de menu bar para macOS que mostra o sinal, o tipo de rede celular (5G, LTE, 
 ```
 ▂▄▆█ 5G          (no hotspot)
 ▂▄▆█             (em outro Wi-Fi)
-▂▄▆█ ⁞ 5G        (com a bateria do iPhone ligada)
+▂▄▆█ 5G
+····             (com a bateria do iPhone ligada: um ponto sob cada barra)
 ```
 
 ## Recursos
 
 - **Torre de sinal** (0–4 barras) e **tipo de rede** do iPhone, atualizados conforme o iPhone anuncia mudanças.
-- **Bateria do iPhone** (opcional, desligada por padrão) como 4 pontos em coluna ao lado da torre, acesos de baixo pra cima. Vale tanto no modo automático quanto no manual. Sem porcentagem: o iPhone só anuncia a bateria em quartos (0, 25, 50, 75, 100).
+- **Bateria do iPhone** (opcional, desligada por padrão) como 4 pontos em fileira embaixo da torre (um sob cada barra), acesos da esquerda pra direita. Vale tanto no modo automático quanto no manual. Sem porcentagem: o iPhone só anuncia a bateria em quartos (0, 25, 50, 75, 100).
 - **Modo automático** (padrão): torre sempre; o texto da rede (5G/LTE) só aparece quando o Mac está usando o hotspot do iPhone.
 - **Modo manual**: escolher em *Mostrar na barra* quais itens aparecem (barras, tipo de rede).
-- Menu com um cabeçalho por iPhone: ícone real do modelo, nome, modelo comercial (`iPhone18,1` → *iPhone 17 Pro*), rede e bateria em pontos (vermelha com 1 quarto ou menos). Também tem horário da última atualização, **Atualizar** (⌘R) e **Sair** (⌘Q).
+- Menu com um cabeçalho por iPhone: ícone real do modelo, nome, modelo comercial (`iPhone18,1` → *iPhone 17 Pro*), rede e bateria em pontos. Também tem horário da última atualização, **Atualizar** (⌘R) e **Sair** (⌘Q).
 - Sem ícone no Dock (`LSUIElement`).
 
 ## Requisitos
@@ -58,7 +59,8 @@ Newtray/
 ├── NewtrayApp.swift            # App + AppDelegate (sem janelas)
 ├── StatusItemController.swift  # NSStatusItem, menu e opções de exibição
 ├── DeviceHeaderView.swift      # Cabeçalho do menu (SwiftUI)
-├── HotspotDevice+Model.swift   # Nome comercial, ícone e pontos da bateria
+├── HotspotDevice+Model.swift   # Nome comercial, ícone e torre com os pontos da bateria
+├── AppIcon.icon                # Ícone (Icon Composer, com variações escuro/transparente/tingido)
 └── HotspotMonitor.swift        # SFRemoteHotspotSession + NWPathMonitor
 ```
 
