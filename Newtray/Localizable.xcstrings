@@ -1,0 +1,186 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%@: %@, signal %lld/4, battery %lld/4" : {
+      "comment" : "Menu bar item tooltip: iPhone name, network type, signal and battery levels",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@: %2$@, sinal %3$lld/4, bateria %4$lld/4"
+          }
+        }
+      }
+    },
+    "Automatic" : {
+      "comment" : "Menu bar display option",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Automático"
+          }
+        }
+      }
+    },
+    "iPhone Battery" : {
+      "comment" : "Menu bar display option",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bateria do iPhone"
+          }
+        }
+      }
+    },
+    "Network Type (5G/LTE)" : {
+      "comment" : "Menu bar display option",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tipo de rede (5G/LTE)"
+          }
+        }
+      }
+    },
+    "No iPhone with Personal Hotspot nearby" : {
+      "comment" : "Menu: no hotspot device found",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhum iPhone com hotspot por perto"
+          }
+        }
+      }
+    },
+    "Off the hotspot: bars only" : {
+      "comment" : "Automatic mode state",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fora do hotspot: só a torre"
+          }
+        }
+      }
+    },
+    "On the hotspot: bars and network" : {
+      "comment" : "Automatic mode state",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usando o hotspot: torre e rede"
+          }
+        }
+      }
+    },
+    "Quit" : {
+      "comment" : "Menu: quit the app",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sair"
+          }
+        }
+      }
+    },
+    "Refresh" : {
+      "comment" : "Menu: restart the hotspot search",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizar"
+          }
+        }
+      }
+    },
+    "Sharing.framework unavailable" : {
+      "comment" : "Menu: the private framework could not be loaded",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sharing.framework indisponível"
+          }
+        }
+      }
+    },
+    "Show in Menu Bar" : {
+      "comment" : "Menu: display options submenu",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar na barra"
+          }
+        }
+      }
+    },
+    "Signal %lld of 4" : {
+      "comment" : "VoiceOver description of the menu bar icon",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sinal %lld de 4"
+          }
+        }
+      }
+    },
+    "Signal %lld of 4, iPhone battery %lld of 4" : {
+      "comment" : "VoiceOver description of the menu bar icon with the battery dots",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sinal %1$lld de 4, bateria do iPhone %2$lld de 4"
+          }
+        }
+      }
+    },
+    "Signal Bars" : {
+      "comment" : "Menu bar display option",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Barras de sinal"
+          }
+        }
+      }
+    },
+    "Updated %@" : {
+      "comment" : "Menu: time of the last update",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizado %@"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

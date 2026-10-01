@@ -1,40 +1,41 @@
 # Newtray
 
-App de menu bar para macOS que mostra o sinal, o tipo de rede celular (5G, LTE, 4G…) e a bateria do iPhone com Instant Hotspot direto na status bar, sem precisar abrir o menu de Wi-Fi.
+A macOS menu bar app that shows your iPhone's Instant Hotspot signal, cellular network type (5G, LTE, 4G…) and battery right in the menu bar, without opening the Wi-Fi menu.
 
 ```
-▂▄▆█ 5G          (no hotspot)
-▂▄▆█             (em outro Wi-Fi)
+▂▄▆█ 5G          (on the hotspot)
+▂▄▆█             (on another Wi-Fi network)
 ▂▄▆█ 5G
-····             (com a bateria do iPhone ligada: um ponto sob cada barra)
+····             (with iPhone Battery on: one dot under each bar)
 ```
 
-## Recursos
+## Features
 
-- **Torre de sinal** (0–4 barras) e **tipo de rede** do iPhone, atualizados conforme o iPhone anuncia mudanças.
-- **Bateria do iPhone** (opcional, desligada por padrão) como 4 pontos em fileira embaixo da torre (um sob cada barra), acesos da esquerda pra direita. Vale tanto no modo automático quanto no manual. Sem porcentagem: o iPhone só anuncia a bateria em quartos (0, 25, 50, 75, 100).
-- **Modo automático** (padrão): torre sempre; o texto da rede (5G/LTE) só aparece quando o Mac está usando o hotspot do iPhone.
-- **Modo manual**: escolher em *Mostrar na barra* quais itens aparecem (barras, tipo de rede).
-- Menu com um cabeçalho por iPhone: ícone real do modelo, nome, modelo comercial (`iPhone18,1` → *iPhone 17 Pro*), rede e bateria em pontos. Também tem horário da última atualização, **Atualizar** (⌘R) e **Sair** (⌘Q).
-- Sem ícone no Dock (`LSUIElement`).
+- **Signal bars** (0–4) and **network type** of the iPhone, updated as the iPhone advertises changes.
+- **iPhone battery** (optional, off by default) as a row of 4 dots under the bars (one under each bar), lit left to right. Works in both automatic and manual modes. No percentage: the iPhone only advertises its battery in quarters (0, 25, 50, 75, 100).
+- **Automatic mode** (default): signal bars always; the network label (5G/LTE) only shows while the Mac is using the iPhone's hotspot.
+- **Manual mode**: pick what shows under *Show in Menu Bar* (signal bars, network type).
+- A menu header per iPhone: the model's real icon, its name, marketing model name (`iPhone18,1` → *iPhone 17 Pro*), network and battery dots. The menu also has the last update time, **Refresh** (⌘R) and **Quit** (⌘Q).
+- No Dock icon (`LSUIElement`).
+- Localized in English and Brazilian Portuguese (String Catalog).
 
-## Requisitos
+## Requirements
 
-- macOS 27 ou mais recente.
-- iPhone com Personal Hotspot, na mesma conta do iCloud, com Bluetooth e Wi-Fi ligados no Mac.
+- macOS 27 or later.
+- An iPhone with Personal Hotspot, signed in to the same iCloud account, with Bluetooth and Wi-Fi on on the Mac.
 
-## Como funciona
+## How it works
 
-| Dado | Fonte |
+| Data | Source |
 |---|---|
-| Tipo de rede, barras, bateria, nome e identificador do modelo | `SFRemoteHotspotSession` (Sharing.framework, **API privada**) — a mesma fonte do menu de Wi-Fi do macOS |
-| Nome comercial e ícone do modelo | `UTType` com a tag class `com.apple.device-model-code` (UTIs do CoreTypes do macOS) |
-| Se o Mac está no hotspot | `NWPathMonitor.isExpensive` (Network, API pública, sem permissão de Localização) |
-| Status bar | `NSStatusItem` com símbolo SF `cellularbars` em 15pt, alinhado aos ícones do sistema |
+| Network type, signal bars, battery, name and model identifier | `SFRemoteHotspotSession` (Sharing.framework, **private API**), the same source as the macOS Wi-Fi menu |
+| Marketing name and model icon | `UTType` with the `com.apple.device-model-code` tag class (UTIs from macOS CoreTypes) |
+| Whether the Mac is on the hotspot | `NWPathMonitor.isExpensive` (Network, public API, no Location permission needed) |
+| Menu bar item | `NSStatusItem` with the `cellularbars` SF Symbol at 15pt, aligned with the system icons |
 
-Valores de `networkType` recebidos do iPhone:
+`networkType` values sent by the iPhone:
 
-| Valor | Rede |
+| Value | Network |
 |---|---|
 | 0 | — |
 | 1 | 1x |
@@ -46,27 +47,28 @@ Valores de `networkType` recebidos do iPhone:
 | 7 | LTE |
 | 8 | 5G |
 
-### Limitações
+### Limitations
 
-- **API privada**: não pode ir para a Mac App Store e pode quebrar em atualizações do macOS.
-- **5G SA × NSA**: o iPhone só anuncia "5G", sem distinguir SA de NSA, então não dá para mostrar "5G+".
-- A atualização depende do anúncio BLE do iPhone; o app reinicia a busca a cada 30s para forçar dados novos.
+- **Private API**: it can't ship on the Mac App Store and may break with macOS updates.
+- **5G SA vs. NSA**: the iPhone only advertises "5G" without telling SA from NSA, so "5G+" can't be shown.
+- Updates depend on the iPhone's BLE advertisement; the app restarts the search every 30 seconds to force fresh data.
 
-## Estrutura
+## Project layout
 
 ```
 Newtray/
-├── NewtrayApp.swift            # App + AppDelegate (sem janelas)
-├── StatusItemController.swift  # NSStatusItem, menu e opções de exibição
-├── DeviceHeaderView.swift      # Cabeçalho do menu (SwiftUI)
-├── HotspotDevice+Model.swift   # Nome comercial, ícone e torre com os pontos da bateria
-├── AppIcon.icon                # Ícone (Icon Composer, com variações escuro/transparente/tingido)
-└── HotspotMonitor.swift        # SFRemoteHotspotSession + NWPathMonitor
+├── NewtrayApp.swift            # App + AppDelegate (no windows)
+├── StatusItemController.swift  # NSStatusItem, menu and display options
+├── DeviceHeaderView.swift      # Menu header (SwiftUI)
+├── HotspotDevice+Model.swift   # Marketing name, icon, and signal bars with battery dots
+├── HotspotMonitor.swift        # SFRemoteHotspotSession + NWPathMonitor
+├── Localizable.xcstrings       # String Catalog (en, pt-BR)
+└── AppIcon.icon                # App icon (Icon Composer, with dark/clear/tinted variants)
 ```
 
-## Build
+## Building
 
-Abrir `Newtray.xcodeproj` no Xcode e rodar o scheme **Newtray**, ou:
+Open `Newtray.xcodeproj` in Xcode and run the **Newtray** scheme, or:
 
 ```bash
 xcodebuild -project Newtray.xcodeproj -scheme Newtray -configuration Release build

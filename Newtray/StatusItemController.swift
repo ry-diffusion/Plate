@@ -2,27 +2,27 @@
 //  StatusItemController.swift
 //  Newtray
 //
-//  NSStatusItem com a torre (símbolo SF) e o tipo de rede (título nativo).
-//  Usa AppKit em vez de MenuBarExtra pra poder escolher o tamanho do símbolo.
+//  NSStatusItem with the signal bars (SF Symbol) and network type (native title).
+//  Uses AppKit instead of MenuBarExtra so the symbol size can be chosen.
 //
 
 import AppKit
 import Observation
 import SwiftUI
 
-/// O que aparece na status bar. Cada opção vira um item marcável no menu.
+/// What shows in the menu bar. Each option becomes a checkable menu item.
 enum LabelOption: String, CaseIterable {
-    /// Torre sempre; tipo de rede só quando o Mac está usando o hotspot.
+    /// Signal bars always; network type only while the Mac is on the hotspot.
     case automatic, signalBars, networkType
-    /// Independente do modo (automático ou manual) e desligada por padrão.
+    /// Independent of the mode (automatic or manual) and off by default.
     case battery
 
     var title: String {
         switch self {
-        case .automatic: "Automático"
-        case .signalBars: "Barras de sinal"
-        case .networkType: "Tipo de rede (5G/LTE)"
-        case .battery: "Bateria do iPhone"
+        case .automatic: String(localized: "Automatic", comment: "Menu bar display option")
+        case .signalBars: String(localized: "Signal Bars", comment: "Menu bar display option")
+        case .networkType: String(localized: "Network Type (5G/LTE)", comment: "Menu bar display option")
+        case .battery: String(localized: "iPhone Battery", comment: "Menu bar display option")
         }
     }
 
@@ -35,11 +35,11 @@ enum LabelOption: String, CaseIterable {
 }
 
 final class StatusItemController: NSObject, NSMenuDelegate {
-    /// Tamanho do símbolo, escolhido pra igualar a altura dos ícones do sistema
-    /// (bateria, Control Center). O padrão do NSStatusItem seria 13pt.
+    /// Symbol size, chosen to match the height of the system icons (battery,
+    /// Control Center). NSStatusItem's default would be 13pt.
     private static let symbolPointSize: CGFloat = 15
-    /// Respiro extra à direita da torre pra dar 6pt entre a torre e o "5G" (o
-    /// botão já põe ~5pt entre a imagem e o título; medido na tela).
+    /// Extra room to the right of the bars for 6pt between them and "5G" (the
+    /// button already puts ~5pt between image and title; measured on screen).
     private static let titleSpacing: CGFloat = 0.5
 
     private let monitor: HotspotMonitor
@@ -69,7 +69,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         let showNetwork: Bool
         let showBattery = LabelOption.battery.isEnabled
         if LabelOption.automatic.isEnabled {
-            // Torre sempre; o texto da rede só quando o Mac usa o hotspot.
+            // Bars always; the network text only while the Mac is on the hotspot.
             showBars = true
             showNetwork = monitor.isUsingHotspot
         } else {
@@ -86,19 +86,21 @@ final class StatusItemController: NSObject, NSMenuDelegate {
             button.image = device.signalGlyph(pointSize: Self.symbolPointSize, showBattery: showBattery,
                                               trailingPadding: showNetwork ? Self.titleSpacing : 0,
                                               canvasHeight: NSStatusBar.system.thickness,
-                                              // Alinha o centro da torre com o do Wi-Fi do sistema (medido na tela).
+                                              // Lines up the bars' center with the system Wi-Fi icon (measured on screen).
                                               verticalOffset: 0.5)
         } else {
             button.image = nil
         }
         button.attributedTitle = showNetwork ? title(device.networkLabel) : NSAttributedString()
-        button.toolTip = "\(device.name): \(device.networkLabel), sinal \(device.signalBars)/4, bateria \(device.batteryQuarters)/4"
+        button.toolTip = String(
+            localized: "\(device.name): \(device.networkLabel), signal \(device.signalBars)/4, battery \(device.batteryQuarters)/4",
+            comment: "Menu bar item tooltip: iPhone name, network type, signal and battery levels")
     }
 
-    /// "5G" em bold, na fonte da menu bar.
+    /// "5G" in bold, in the menu bar font.
     private func title(_ text: String) -> NSAttributedString {
         let size = NSFont.menuBarFont(ofSize: 0).pointSize
-        // O título padrão do botão fica 0,5pt abaixo do texto do relógio.
+        // The button's default title sits 0.5pt below the clock's text.
         return NSAttributedString(string: text, attributes: [
             .font: NSFont.systemFont(ofSize: size, weight: .bold),
             .baselineOffset: 0.5,
@@ -121,9 +123,11 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         menu.removeAllItems()
 
         if !monitor.isAvailable {
-            menu.addItem(.disabled("Sharing.framework indisponível"))
+            menu.addItem(.disabled(String(localized: "Sharing.framework unavailable",
+                                          comment: "Menu: the private framework could not be loaded")))
         } else if monitor.devices.isEmpty {
-            menu.addItem(.disabled("Nenhum iPhone com hotspot por perto"))
+            menu.addItem(.disabled(String(localized: "No iPhone with Personal Hotspot nearby",
+                                          comment: "Menu: no hotspot device found")))
         }
         for device in monitor.devices {
             let item = NSMenuItem()
@@ -133,11 +137,13 @@ final class StatusItemController: NSObject, NSMenuDelegate {
             menu.addItem(item)
         }
         if let lastUpdate = monitor.lastUpdate {
-            menu.addItem(.disabled("Atualizado \(lastUpdate.formatted(.dateTime.hour().minute().second()))"))
+            let time = lastUpdate.formatted(.dateTime.hour().minute().second())
+            menu.addItem(.disabled(String(localized: "Updated \(time)", comment: "Menu: time of the last update")))
         }
 
         menu.addItem(.separator())
-        let optionsItem = NSMenuItem(title: "Mostrar na barra", action: nil, keyEquivalent: "")
+        let optionsItem = NSMenuItem(title: String(localized: "Show in Menu Bar", comment: "Menu: display options submenu"),
+                                     action: nil, keyEquivalent: "")
         let optionsMenu = NSMenu()
         let automatic = LabelOption.automatic.isEnabled
         for option in LabelOption.allCases {
@@ -149,17 +155,17 @@ final class StatusItemController: NSObject, NSMenuDelegate {
             case .automatic:
                 optionsMenu.addItem(item)
                 optionsMenu.addItem(.disabled(monitor.isUsingHotspot
-                    ? "Usando o hotspot: torre e rede"
-                    : "Fora do hotspot: só a torre"))
+                    ? String(localized: "On the hotspot: bars and network", comment: "Automatic mode state")
+                    : String(localized: "Off the hotspot: bars only", comment: "Automatic mode state")))
                 optionsMenu.addItem(.separator())
             case .signalBars, .networkType:
-                // No automático as opções manuais não valem, então ficam desativadas.
+                // Manual options don't apply in automatic mode, so they're disabled.
                 if automatic {
                     item.action = nil
                 }
                 optionsMenu.addItem(item)
             case .battery:
-                // Vale nos dois modos.
+                // Applies in both modes.
                 optionsMenu.addItem(.separator())
                 optionsMenu.addItem(item)
             }
@@ -168,10 +174,12 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         menu.addItem(optionsItem)
 
         menu.addItem(.separator())
-        let refresh = NSMenuItem(title: "Atualizar", action: #selector(refresh), keyEquivalent: "r")
+        let refresh = NSMenuItem(title: String(localized: "Refresh", comment: "Menu: restart the hotspot search"),
+                                 action: #selector(refresh), keyEquivalent: "r")
         refresh.target = self
         menu.addItem(refresh)
-        menu.addItem(NSMenuItem(title: "Sair", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: String(localized: "Quit", comment: "Menu: quit the app"),
+                                action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
     }
 
     @objc private func toggleOption(_ sender: NSMenuItem) {

@@ -2,9 +2,9 @@
 //  HotspotDevice+Model.swift
 //  Newtray
 //
-//  Nome comercial e ícone do aparelho a partir do identificador de modelo
-//  ("iPhone18,1" → "iPhone 17 Pro"), usando os UTIs que o CoreTypes do macOS
-//  registra para cada modelo.
+//  Marketing name and icon for the device from its model identifier
+//  ("iPhone18,1" → "iPhone 17 Pro"), using the UTIs that macOS CoreTypes
+//  registers for each model.
 //
 
 import AppKit
@@ -18,7 +18,7 @@ extension HotspotDevice {
         return type
     }
 
-    /// "iPhone 17 Pro"; cai no identificador cru se o macOS não conhece o modelo.
+    /// "iPhone 17 Pro"; falls back to the raw identifier if macOS doesn't know the model.
     var modelName: String {
         modelType?.localizedDescription ?? model
     }
@@ -30,31 +30,30 @@ extension HotspotDevice {
         return NSImage(systemSymbolName: "iphone", accessibilityDescription: nil) ?? NSImage()
     }
 
-    /// O iPhone anuncia a bateria em quartos (0, 25, 50, 75, 100), então ela é
-    /// mostrada como nível de 0 a 4, nunca como porcentagem.
+    /// The iPhone advertises its battery in quarters (0, 25, 50, 75, 100), so it's
+    /// shown as a 0–4 level, never as a percentage.
     var batteryQuarters: Int {
         min(max(Int((Double(batteryLevel) / 25).rounded()), 0), 4)
     }
 
-    /// Torre de sinal com, opcionalmente, a bateria do iPhone como 4 pontos em
-    /// fileira embaixo (um sob cada barra), acesos da esquerda pra direita
-    /// conforme os quartos. Sem porcentagem: o iPhone só anuncia a bateria em
-    /// quartos.
+    /// Signal bars with, optionally, the iPhone battery as a row of 4 dots below
+    /// (one under each bar), lit left to right by quarter. No percentage: the
+    /// iPhone only advertises its battery in quarters.
     ///
-    /// Com `canvasHeight` (a altura do botão da status bar), a torre fica
-    /// sempre no centro, com ou sem bateria, e os pontos usam o espaço que
-    /// sobra embaixo. `verticalOffset` sobe a torre (em pontos) pra acertar o
-    /// centro óptico com os outros itens. Sem `canvasHeight`, a imagem fica
-    /// justa (pra usar no menu).
-    /// Imagem template: quem pinta é a menu bar.
+    /// With `canvasHeight` (the menu bar button height), the bars always stay
+    /// centered, with or without the battery, and the dots use the space left
+    /// below. `verticalOffset` raises the bars (in points) to match the optical
+    /// center of the other items. Without `canvasHeight`, the image is tight
+    /// (for use in the menu).
+    /// Template image: the menu bar does the tinting.
     func signalGlyph(pointSize: CGFloat, showBattery: Bool, trailingPadding: CGFloat = 0,
                      canvasHeight: CGFloat? = nil, verticalOffset: CGFloat = 0) -> NSImage? {
         let config = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .regular)
         guard let bars = NSImage(systemSymbolName: "cellularbars", variableValue: Double(signalBars) / 4,
                                  accessibilityDescription: nil)?.withSymbolConfiguration(config) else { return nil }
 
-        // Em 15pt: pontos de 2pt a 1pt da torre. O botão da status bar corta
-        // ~1,5pt da base da imagem, então não dá pra ser maior que isso.
+        // At 15pt: 2pt dots, 1pt below the bars. The menu bar button clips
+        // ~1.5pt off the bottom of the image, so they can't be any bigger.
         let dot = (pointSize * 0.135).rounded()
         let spacing = (pointSize / 15).rounded()
         let compactHeight = bars.size.height + (showBattery ? dot + spacing : 0)
@@ -78,8 +77,10 @@ extension HotspotDevice {
         }
         image.isTemplate = true
         image.accessibilityDescription = showBattery
-            ? "Sinal \(signalBars) de 4, bateria do iPhone \(filled) de 4"
-            : "Sinal \(signalBars) de 4"
+            ? String(localized: "Signal \(signalBars) of 4, iPhone battery \(filled) of 4",
+                     comment: "VoiceOver description of the menu bar icon with the battery dots")
+            : String(localized: "Signal \(signalBars) of 4",
+                     comment: "VoiceOver description of the menu bar icon")
         return image
     }
 

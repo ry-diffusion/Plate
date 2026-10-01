@@ -2,9 +2,9 @@
 //  HotspotMonitor.swift
 //  Newtray
 //
-//  Lê os dados do Instant Hotspot (tipo de rede celular, barras de sinal e bateria) do iPhone
-//  através da API privada SFRemoteHotspotSession (Sharing.framework), a mesma
-//  fonte que o menu de Wi-Fi do macOS usa.
+//  Reads the iPhone's Instant Hotspot data (cellular network type, signal bars
+//  and battery) through the private SFRemoteHotspotSession API
+//  (Sharing.framework), the same source the macOS Wi-Fi menu uses.
 //
 
 import Foundation
@@ -16,12 +16,12 @@ struct HotspotDevice: Equatable, Identifiable {
     let name: String
     let model: String
     let networkType: Int
-    /// Barras de sinal, 0–4.
+    /// Signal bars, 0–4.
     let signalBars: Int
-    /// Bateria do iPhone em %, 0–100.
+    /// iPhone battery in %, 0–100.
     let batteryLevel: Int
 
-    /// Rótulos tirados de -[SFRemoteHotspotDevice description].
+    /// Labels taken from -[SFRemoteHotspotDevice description].
     var networkLabel: String {
         switch networkType {
         case 1: "1x"
@@ -42,12 +42,12 @@ final class HotspotMonitor {
     private(set) var devices: [HotspotDevice] = []
     private(set) var lastUpdate: Date?
     private(set) var isAvailable = true
-    /// Se o Mac está saindo pra internet pelo hotspot do iPhone. O macOS marca
-    /// o Personal Hotspot como conexão cara (`isExpensive`), sem pedir
-    /// permissão de Localização como o SSID pediria.
+    /// Whether the Mac is reaching the internet through the iPhone's hotspot.
+    /// macOS flags Personal Hotspot as an expensive connection (`isExpensive`),
+    /// which needs no Location permission, unlike reading the SSID.
     private(set) var isUsingHotspot = false
 
-    /// O primeiro device encontrado (normalmente só existe um iPhone).
+    /// The first device found (there's usually only one iPhone).
     var device: HotspotDevice? { devices.first }
 
     private var session: NSObject?
@@ -82,8 +82,8 @@ final class HotspotMonitor {
         session.perform(NSSelectorFromString("startBrowsing"))
         self.session = session
 
-        // O sharingd só avisa quando o anúncio BLE do iPhone muda; reiniciar o
-        // browse de tempos em tempos força uma lista nova.
+        // sharingd only reports when the iPhone's BLE advertisement changes;
+        // restarting the browse every so often forces a fresh list.
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.restartBrowsing() }
         }
@@ -98,7 +98,7 @@ final class HotspotMonitor {
 private final class SessionDelegate: NSObject {
     var onUpdate: (([HotspotDevice]) -> Void)?
 
-    /// Chamado pelo SFRemoteHotspotSession numa fila de XPC.
+    /// Called by SFRemoteHotspotSession on an XPC queue.
     @objc(session:updatedFoundDevices:)
     nonisolated func session(_ session: AnyObject, updatedFoundDevices devices: NSArray) {
         let parsed = devices.compactMap { ($0 as? NSObject).flatMap(HotspotDevice.init(sharingDevice:)) }

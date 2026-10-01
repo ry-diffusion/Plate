@@ -2,7 +2,7 @@
 //  DeviceHeaderView.swift
 //  Newtray
 //
-//  Cabeçalho do menu com o iPhone: ícone, nome, modelo, rede e bateria.
+//  Menu header for an iPhone: icon, name, model, network and battery.
 //
 
 import SwiftUI
@@ -30,7 +30,7 @@ struct DeviceHeaderView: View {
 
             Spacer(minLength: 16)
 
-            // Mesmo desenho da status bar: torre (com a bateria embaixo) e rede.
+            // Same drawing as the menu bar: signal (with the battery below) and network.
             HStack(spacing: 6) {
                 if let glyph = device.signalGlyph(pointSize: 15, showBattery: showBattery) {
                     Image(nsImage: glyph)

@@ -12,8 +12,8 @@ struct NewtrayApp: App {
     @NSApplicationDelegateAdaptor private var appDelegate: AppDelegate
 
     var body: some Scene {
-        // A status bar é um NSStatusItem (ver StatusItemController); o app
-        // não tem janela.
+        // The menu bar item is an NSStatusItem (see StatusItemController); the
+        // app has no windows.
         Settings { EmptyView() }
     }
 }
