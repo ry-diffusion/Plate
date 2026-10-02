@@ -47,8 +47,13 @@ extension HotspotDevice {
     /// center of the other items. Without `canvasHeight`, the image is tight
     /// (for use in the menu).
     /// Template image: the menu bar does the tinting.
+    /// With 0 signal the bars are drawn like an iPhone with no service: 4 short
+    /// bars, all as tall as the first one. `searchPhase` (0–1) sweeps a wave
+    /// across them for the "searching for network" animation: as it passes, each
+    /// bar grows to its full height and brightens, then shrinks back.
     func signalGlyph(pointSize: CGFloat, showBattery: Bool, trailingPadding: CGFloat = 0,
-                     canvasHeight: CGFloat? = nil, verticalOffset: CGFloat = 0) -> NSImage? {
+                     canvasHeight: CGFloat? = nil, verticalOffset: CGFloat = 0,
+                     searchPhase: CGFloat? = nil) -> NSImage? {
         let config = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .regular)
         guard let bars = NSImage(systemSymbolName: "cellularbars", variableValue: Double(signalBars) / 4,
                                  accessibilityDescription: nil)?.withSymbolConfiguration(config) else { return nil }
@@ -66,9 +71,21 @@ extension HotspotDevice {
         let segmentsY = barsY - spacing - segmentHeight
         let filled = batteryQuarters
         let spans = Self.barSpans(pointSize: pointSize)
+        let barRects = Self.barRects(pointSize: pointSize)
+        let noService = signalBars == 0 && barRects.count == 4
 
         let image = NSImage(size: NSSize(width: bars.size.width + trailingPadding, height: height), flipped: false) { _ in
-            bars.draw(in: NSRect(x: 0, y: barsY, width: bars.size.width, height: bars.size.height))
+            if noService {
+                let stub = barRects[0]
+                for (index, bar) in barRects.enumerated() {
+                    NSColor.black.withAlphaComponent(Self.searchAlpha(index: index, phase: searchPhase, base: 0.3)).setFill()
+                    let grown = stub.height + Self.searchGlow(index: index, phase: searchPhase) * (bar.height - stub.height)
+                    let rect = NSRect(x: bar.minX, y: barsY + stub.minY, width: bar.width, height: grown)
+                    NSBezierPath(roundedRect: rect, xRadius: rect.width / 2, yRadius: rect.width / 2).fill()
+                }
+            } else {
+                bars.draw(in: NSRect(x: 0, y: barsY, width: bars.size.width, height: bars.size.height))
+            }
             guard showBattery else { return true }
             for (index, span) in spans.enumerated() {
                 let mark: NSRect
@@ -103,8 +120,10 @@ extension HotspotDevice {
     /// Template image: the menu bar does the tinting.
     /// `isPlaceholder` draws the "no iPhone found" state: no ring, a faint
     /// center and 4 faint dots, like an iPhone with no service.
+    /// `searchPhase` (0–1) sweeps a soft glow across the signal dots, for the
+    /// "searching for network" animation.
     func duoGlyph(size: CGFloat, showBattery: Bool, showNetwork: Bool, canvasHeight: CGFloat? = nil,
-                  isPlaceholder: Bool = false) -> NSImage {
+                  isPlaceholder: Bool = false, searchPhase: CGFloat? = nil) -> NSImage {
         let iconHeight = size * 1.04
         let height = max(canvasHeight ?? iconHeight, iconHeight)
         let originY = ((height - iconHeight) / 2).rounded()
@@ -164,7 +183,7 @@ extension HotspotDevice {
 
             let dot = 0.10 * size
             for (index, (x, y)) in [(0.26, 0.92), (0.42, 0.975), (0.58, 0.975), (0.74, 0.92)].enumerated() {
-                NSColor.black.withAlphaComponent(index < bars ? 1 : 0.25).setFill()
+                NSColor.black.withAlphaComponent(index < bars ? 1 : Self.searchAlpha(index: index, phase: searchPhase, base: 0.25)).setFill()
                 let c = point(x, y)
                 NSBezierPath(ovalIn: NSRect(x: c.x - dot / 2, y: c.y - dot / 2, width: dot, height: dot)).fill()
             }
@@ -182,44 +201,101 @@ extension HotspotDevice {
     var isBatteryLow: Bool { batteryQuarters <= 1 }
 
     /// Horizontal extent of each of the 4 bars inside the `cellularbars` symbol.
-    /// The symbol has side padding and the bars aren't evenly spread across its
-    /// width, so they're measured from a rendering once per point size.
     private static func barSpans(pointSize: CGFloat) -> [ClosedRange<CGFloat>] {
-        if let cached = barSpansCache[pointSize] { return cached }
+        barRects(pointSize: pointSize).map { $0.minX...$0.maxX }
+    }
+
+    /// Geometry of the Classic "searching" bars inside `signalGlyph`'s image
+    /// (with `canvasHeight`, no battery): each bar's short no-service frame and
+    /// its full frame in the signal staircase. Used to animate them with Core
+    /// Animation instead of redrawing the image.
+    static func classicSearchBars(pointSize: CGFloat, canvasHeight: CGFloat,
+                                  verticalOffset: CGFloat) -> [(stub: NSRect, full: NSRect)] {
+        let config = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .regular)
+        let rects = barRects(pointSize: pointSize)
+        guard rects.count == 4,
+              let symbol = NSImage(systemSymbolName: "cellularbars", variableValue: 0, accessibilityDescription: nil)?
+                .withSymbolConfiguration(config) else { return [] }
+        let barsY = ((canvasHeight - symbol.size.height) / 2).rounded() + verticalOffset
+        let stub = rects[0]
+        return rects.map { bar in
+            (NSRect(x: bar.minX, y: barsY + stub.minY, width: bar.width, height: stub.height),
+             NSRect(x: bar.minX, y: barsY + stub.minY, width: bar.width, height: bar.height))
+        }
+    }
+
+    /// Frames of the 4 signal dots inside `duoGlyph`'s image (with `canvasHeight`).
+    static func duoDotRects(size: CGFloat, canvasHeight: CGFloat) -> [NSRect] {
+        let iconHeight = size * 1.04
+        let height = max(canvasHeight, iconHeight)
+        let originY = ((height - iconHeight) / 2).rounded()
+        let dot = 0.10 * size
+        return [(0.26, 0.92), (0.42, 0.975), (0.58, 0.975), (0.74, 0.92)].map { x, y in
+            NSRect(x: x * size - dot / 2, y: originY + iconHeight - y * size - dot / 2, width: dot, height: dot)
+        }
+    }
+
+    /// Opacity of bar or dot `index` (0–3) during the searching animation: a
+    /// Gaussian glow whose center travels from before the first to past the
+    /// last one over a cycle, so every mark fades in and out smoothly and the
+    /// ends of the cycle work as a short pause with nothing lit.
+    static func searchAlpha(index: Int, phase: CGFloat?, base: CGFloat) -> CGFloat {
+        base + (1 - base) * searchGlow(index: index, phase: phase)
+    }
+
+    /// 0–1 strength of the searching wave at bar or dot `index`.
+    static func searchGlow(index: Int, phase: CGFloat?) -> CGFloat {
+        guard let phase else { return 0 }
+        let head = -1 + phase * 5
+        let distance = CGFloat(index) - head
+        return exp(-(distance * distance) / (2 * 0.5 * 0.5))
+    }
+
+    /// Frame of each of the 4 bars inside the `cellularbars` symbol (y up). The
+    /// symbol has padding and the bars aren't evenly spread across its width,
+    /// so they're measured from a rendering once per point size.
+    private static func barRects(pointSize: CGFloat) -> [NSRect] {
+        if let cached = barRectsCache[pointSize] { return cached }
         let config = NSImage.SymbolConfiguration(pointSize: pointSize, weight: .regular)
         guard let symbol = NSImage(systemSymbolName: "cellularbars", variableValue: 1, accessibilityDescription: nil)?
             .withSymbolConfiguration(config) else { return [] }
 
         let scale: CGFloat = 8
         let width = Int(symbol.size.width * scale), height = Int(symbol.size.height * scale)
-        var spans: [ClosedRange<CGFloat>] = []
+        var rects: [NSRect] = []
         if let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: width, pixelsHigh: height, bitsPerSample: 8,
                                       samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
                                       bytesPerRow: 0, bitsPerPixel: 0) {
+            // Drawn at its real point size into a high-resolution bitmap: drawing
+            // it into a rect 8× larger makes SF Symbols render the bars with the
+            // proportions of a bigger size, which are taller and offset.
+            rep.size = symbol.size
             NSGraphicsContext.saveGraphicsState()
             NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
-            symbol.draw(in: NSRect(x: 0, y: 0, width: width, height: height))
+            symbol.draw(in: NSRect(origin: .zero, size: symbol.size))
             NSGraphicsContext.restoreGraphicsState()
 
-            func isInk(_ x: Int) -> Bool {
-                (0..<height).contains { (rep.colorAt(x: x, y: $0)?.alphaComponent ?? 0) > 0.5 }
-            }
+            func isInk(_ x: Int, _ y: Int) -> Bool { (rep.colorAt(x: x, y: y)?.alphaComponent ?? 0) > 0.1 }
             var x = 0
             while x < width {
-                guard isInk(x) else { x += 1; continue }
+                guard (0..<height).contains(where: { isInk(x, $0) }) else { x += 1; continue }
                 let start = x
-                while x < width, isInk(x) { x += 1 }
-                spans.append(CGFloat(start) / scale...CGFloat(x) / scale)
+                while x < width, (0..<height).contains(where: { isInk(x, $0) }) { x += 1 }
+                // Bitmap rows count from the top.
+                let rows = (0..<height).filter { y in (start..<x).contains { isInk($0, y) } }
+                rects.append(NSRect(x: CGFloat(start) / scale, y: CGFloat(height - rows.last! - 1) / scale,
+                                    width: CGFloat(x - start) / scale, height: CGFloat(rows.count) / scale))
             }
         }
-        if spans.count != 4 {
-            // Fallback: evenly spaced columns.
-            let column = symbol.size.width / 4
-            spans = (0..<4).map { CGFloat($0) * column + column * 0.2...CGFloat($0 + 1) * column - column * 0.2 }
+        if rects.count != 4 {
+            // Fallback: evenly spaced columns of growing height.
+            let column = symbol.size.width / 4, unit = symbol.size.height / 4
+            rects = (0..<4).map { NSRect(x: CGFloat($0) * column + column * 0.2, y: 0, width: column * 0.6,
+                                         height: unit * CGFloat($0 + 1)) }
         }
-        barSpansCache[pointSize] = spans
-        return spans
+        barRectsCache[pointSize] = rects
+        return rects
     }
 
-    private static var barSpansCache: [CGFloat: [ClosedRange<CGFloat>]] = [:]
+    private static var barRectsCache: [CGFloat: [NSRect]] = [:]
 }

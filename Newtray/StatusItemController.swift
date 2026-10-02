@@ -66,6 +66,13 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     private static let duoSize: CGFloat = 17.5
 
     private let monitor: HotspotMonitor
+    /// The "searching for network" animation shown while no iPhone is found,
+    /// and the style and appearance it was built for.
+    private var searchView: SearchAnimationView?
+    private var searchViewKey: String?
+    private var appearanceObservation: NSKeyValueObservation?
+    /// Length of one sweep across the 4 bars, including the pause at the ends.
+    private static let searchCycle: TimeInterval = 1.6
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
     init(monitor: HotspotMonitor) {
@@ -102,22 +109,22 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
         let style = LabelStyle.current
         guard let device = monitor.device else {
-            // No iPhone found: the same glyph with every bar faint, like an iPhone
-            // with no service, so the item keeps its shape and size.
-            let none = HotspotDevice(id: "", name: "", model: "", networkType: 0, signalBars: 0, batteryLevel: 0)
-            switch style {
-            case .duo:
-                button.image = none.duoGlyph(size: Self.duoSize, showBattery: false, showNetwork: false,
-                                             canvasHeight: NSStatusBar.system.thickness, isPlaceholder: true)
-            case .classic:
-                button.image = none.signalGlyph(pointSize: Self.symbolPointSize, showBattery: false,
-                                                canvasHeight: NSStatusBar.system.thickness, verticalOffset: 0.5)
+            // No iPhone found: short faint bars (or dots), like an iPhone with
+            // no service. Only while the Mac is on the hotspot does a wave sweep
+            // across them, the iPhone's "searching for network" look; otherwise
+            // there's nothing being looked for, so they stay still.
+            if monitor.isUsingHotspot {
+                startSearchAnimation(style: style)
+            } else {
+                stopSearchAnimation()
+                button.image = noServiceGlyph(style: style)
             }
             button.attributedTitle = NSAttributedString()
             button.toolTip = String(localized: "No iPhone with Personal Hotspot nearby",
                                     comment: "Menu: no hotspot device found")
             return
         }
+        stopSearchAnimation()
         guard style == .duo || showBars || showNetwork || showBattery else {
             button.image = symbol("personalhotspot")
             button.attributedTitle = NSAttributedString()
@@ -143,6 +150,70 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         button.toolTip = String(
             localized: "\(device.name): \(device.networkLabel), signal \(device.signalBars)/4, battery \(device.batteryQuarters)/4",
             comment: "Menu bar item tooltip: iPhone name, network type, signal and battery levels")
+    }
+
+    /// Shows the static no-service glyph with the animated marks laid over it.
+    /// The static no-service glyph: short faint bars (Classic) or faint dots (Duo).
+    private func noServiceGlyph(style: LabelStyle) -> NSImage? {
+        let thickness = NSStatusBar.system.thickness
+        let none = HotspotDevice(id: "", name: "", model: "", networkType: 0, signalBars: 0, batteryLevel: 0)
+        return switch style {
+        case .duo:
+            none.duoGlyph(size: Self.duoSize, showBattery: false, showNetwork: false,
+                          canvasHeight: thickness, isPlaceholder: true)
+        case .classic:
+            none.signalGlyph(pointSize: Self.symbolPointSize, showBattery: false,
+                             canvasHeight: thickness, verticalOffset: 0.5)
+        }
+    }
+
+    private func startSearchAnimation(style: LabelStyle) {
+        guard let button = statusItem.button else { return }
+        let thickness = NSStatusBar.system.thickness
+        let base = noServiceGlyph(style: style)
+        let marks: [SearchAnimationView.Mark] = switch style {
+        case .duo:
+            HotspotDevice.duoDotRects(size: Self.duoSize, canvasHeight: thickness)
+                .map { .init(rest: $0, peak: $0) }
+        case .classic:
+            HotspotDevice.classicSearchBars(pointSize: Self.symbolPointSize, canvasHeight: thickness,
+                                            verticalOffset: 0.5)
+                .map { .init(rest: $0.stub, peak: $0.full) }
+        }
+        let isDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        let key = "\(style.rawValue)-\(isDark)"
+        guard searchViewKey != key, let base else { return }
+        button.image = base
+        searchView?.removeFromSuperview()
+        button.layoutSubtreeIfNeeded()
+        // The button centers its image; the overlay sits exactly on it.
+        let frame = NSRect(x: ((button.bounds.width - base.size.width) / 2).rounded(),
+                           y: ((button.bounds.height - base.size.height) / 2).rounded(),
+                           width: base.size.width, height: base.size.height)
+        let view = SearchAnimationView(frame: frame, marks: marks, color: isDark ? .white : .black,
+                                       cycle: Self.searchCycle)
+        view.autoresizingMask = [.minXMargin, .maxXMargin, .minYMargin, .maxYMargin]
+        button.addSubview(view)
+        searchView = view
+        searchViewKey = key
+
+        // Rebuilds with the right color when the menu bar turns light or dark.
+        // Only on a real change: the button reports appearance updates for
+        // unrelated reasons too, and rebuilding on each would loop.
+        appearanceObservation = button.observe(\.effectiveAppearance) { [weak self] button, _ in
+            let nowDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            guard nowDark != isDark else { return }
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { self?.updateButton() }
+            }
+        }
+    }
+
+    private func stopSearchAnimation() {
+        searchView?.removeFromSuperview()
+        searchView = nil
+        searchViewKey = nil
+        appearanceObservation = nil
     }
 
     /// "5G" in bold, in the menu bar font.

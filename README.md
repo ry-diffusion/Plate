@@ -14,7 +14,7 @@ Two styles, picked under *Show in Menu Bar*:
 ▬▬▬·             (Classic with iPhone Battery on: one mark under each bar)
 ```
 
-When no iPhone is found, both styles keep their shape with every bar or dot faint, like an iPhone with no service.
+When no iPhone is found, both styles show short faint bars (or faint dots), like an iPhone with no service. While the Mac is on the hotspot, a wave sweeps across them, like the iPhone's "searching for network" animation: in Classic each bar grows to its height in the staircase and shrinks back. The animation runs on Core Animation, so it costs no CPU.
 
 ## Features
 
@@ -68,6 +68,7 @@ Newtray/
 ├── StatusItemController.swift  # NSStatusItem, menu and display options
 ├── DeviceHeaderView.swift      # Menu header (SwiftUI)
 ├── HotspotDevice+Model.swift   # Marketing name, icon, and the iPhone Duo / Classic glyphs
+├── SearchAnimationView.swift   # "Searching for network" animation (Core Animation)
 ├── HotspotMonitor.swift        # SFRemoteHotspotSession + NWPathMonitor
 ├── Localizable.xcstrings       # String Catalog (en, pt-BR)
 └── AppIcon.icon                # App icon (Icon Composer, with dark/clear/tinted variants)
