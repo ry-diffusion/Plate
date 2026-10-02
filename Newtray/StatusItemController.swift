@@ -305,6 +305,13 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         menu.addItem(optionsItem)
 
         menu.addItem(.separator())
+        let login = NSMenuItem(title: String(localized: "Open at Login", comment: "Menu: launch the app at login"),
+                               action: #selector(toggleLaunchAtLogin), keyEquivalent: "")
+        login.target = self
+        login.state = LaunchAtLogin.isEnabled ? .on : .off
+        menu.addItem(login)
+
+        menu.addItem(.separator())
         let refresh = NSMenuItem(title: String(localized: "Refresh", comment: "Menu: restart the hotspot search"),
                                  action: #selector(refresh), keyEquivalent: "r")
         refresh.target = self
@@ -323,6 +330,10 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         guard let raw = sender.representedObject as? String, let style = LabelStyle(rawValue: raw) else { return }
         LabelStyle.current = style
         updateButton()
+    }
+
+    @objc private func toggleLaunchAtLogin() {
+        LaunchAtLogin.setEnabled(!LaunchAtLogin.isEnabled)
     }
 
     @objc private func refresh() {

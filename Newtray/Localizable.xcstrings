@@ -109,6 +109,18 @@
         }
       }
     },
+    "Open at Login" : {
+      "comment" : "Menu: launch the app at login",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Abrir ao Iniciar Sessão"
+          }
+        }
+      }
+    },
     "Quit" : {
       "comment" : "Menu: quit the app",
       "extractionState" : "manual",

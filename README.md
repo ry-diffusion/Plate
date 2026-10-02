@@ -23,6 +23,7 @@ When no iPhone is found, both styles show short faint bars (or faint dots), like
 - **Automatic mode** (default): signal bars always; the network label (5G/LTE) only shows while the Mac is using the iPhone's hotspot.
 - **Manual mode**: pick what shows under *Show in Menu Bar* (signal bars, network type).
 - A menu header per iPhone: the model's real icon, its name, marketing model name (`iPhone18,1` → *iPhone 17 Pro*), network and battery marks. The menu also has the last update time, **Refresh** (⌘R) and **Quit** (⌘Q).
+- **Open at Login** (on by default, toggle in the menu) via `SMAppService`.
 - No Dock icon (`LSUIElement`).
 - Localized in English and Brazilian Portuguese (String Catalog).
 
@@ -68,6 +69,7 @@ Newtray/
 ├── StatusItemController.swift  # NSStatusItem, menu and display options
 ├── DeviceHeaderView.swift      # Menu header (SwiftUI)
 ├── HotspotDevice+Model.swift   # Marketing name, icon, and the iPhone Duo / Classic glyphs
+├── LaunchAtLogin.swift         # Open at Login (SMAppService)
 ├── SearchAnimationView.swift   # "Searching for network" animation (Core Animation)
 ├── HotspotMonitor.swift        # SFRemoteHotspotSession + NWPathMonitor
 ├── Localizable.xcstrings       # String Catalog (en, pt-BR)
