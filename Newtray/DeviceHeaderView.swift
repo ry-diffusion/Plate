@@ -9,6 +9,7 @@ import SwiftUI
 
 struct DeviceHeaderView: View {
     let device: HotspotDevice
+    var style: LabelStyle = .duo
     var showBattery = true
 
     var body: some View {
@@ -30,14 +31,22 @@ struct DeviceHeaderView: View {
 
             Spacer(minLength: 16)
 
-            // Same drawing as the menu bar: signal (with the battery below) and network.
-            HStack(spacing: 6) {
-                if let glyph = device.signalGlyph(pointSize: 15, showBattery: showBattery) {
-                    Image(nsImage: glyph)
+            // Same drawing as the menu bar.
+            Group {
+                switch style {
+                case .duo:
+                    Image(nsImage: device.duoGlyph(size: 26, showBattery: showBattery, showNetwork: true))
                         .renderingMode(.template)
+                case .classic:
+                    HStack(spacing: 6) {
+                        if let glyph = device.signalGlyph(pointSize: 15, showBattery: showBattery) {
+                            Image(nsImage: glyph)
+                                .renderingMode(.template)
+                        }
+                        Text(device.networkLabel)
+                            .fontWeight(.bold)
+                    }
                 }
-                Text(device.networkLabel)
-                    .fontWeight(.bold)
             }
             .font(.system(size: 13, weight: .medium))
         }

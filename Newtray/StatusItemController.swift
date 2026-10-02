@@ -34,6 +34,27 @@ enum LabelOption: String, CaseIterable {
     private var storageKey: String { "show.\(rawValue)" }
 }
 
+/// How the menu bar item is drawn.
+enum LabelStyle: String, CaseIterable {
+    /// iPhone Duo–style circle: battery ring, network type in the center and
+    /// signal dots below.
+    case duo
+    /// Signal bars with the network type beside them and the battery marks below.
+    case classic
+
+    var title: String {
+        switch self {
+        case .duo: String(localized: "iPhone Duo", comment: "Menu bar style option")
+        case .classic: String(localized: "Classic", comment: "Menu bar style option")
+        }
+    }
+
+    static var current: LabelStyle {
+        get { UserDefaults.standard.string(forKey: "style").flatMap(LabelStyle.init(rawValue:)) ?? .duo }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: "style") }
+    }
+}
+
 final class StatusItemController: NSObject, NSMenuDelegate {
     /// Symbol size, chosen to match the height of the system icons (battery,
     /// Control Center). NSStatusItem's default would be 13pt.
@@ -41,6 +62,8 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     /// Extra room to the right of the bars for 6pt between them and "5G" (the
     /// button already puts ~5pt between image and title; measured on screen).
     private static let titleSpacing: CGFloat = 0.5
+    /// Diameter of the iPhone Duo–style circle, close to the system icons' height.
+    private static let duoSize: CGFloat = 17.5
 
     private let monitor: HotspotMonitor
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -77,12 +100,35 @@ final class StatusItemController: NSObject, NSMenuDelegate {
             showNetwork = LabelOption.networkType.isEnabled
         }
 
-        guard let device = monitor.device, showBars || showNetwork || showBattery else {
-            button.image = symbol(monitor.device == nil ? "personalhotspot.slash" : "personalhotspot")
+        let style = LabelStyle.current
+        guard let device = monitor.device else {
+            // No iPhone found: the same glyph with every bar faint, like an iPhone
+            // with no service, so the item keeps its shape and size.
+            let none = HotspotDevice(id: "", name: "", model: "", networkType: 0, signalBars: 0, batteryLevel: 0)
+            switch style {
+            case .duo:
+                button.image = none.duoGlyph(size: Self.duoSize, showBattery: false, showNetwork: false,
+                                             canvasHeight: NSStatusBar.system.thickness, isPlaceholder: true)
+            case .classic:
+                button.image = none.signalGlyph(pointSize: Self.symbolPointSize, showBattery: false,
+                                                canvasHeight: NSStatusBar.system.thickness, verticalOffset: 0.5)
+            }
+            button.attributedTitle = NSAttributedString()
+            button.toolTip = String(localized: "No iPhone with Personal Hotspot nearby",
+                                    comment: "Menu: no hotspot device found")
+            return
+        }
+        guard style == .duo || showBars || showNetwork || showBattery else {
+            button.image = symbol("personalhotspot")
             button.attributedTitle = NSAttributedString()
             return
         }
-        if showBars {
+        if style == .duo {
+            // Everything lives in the circle; the signal dots are part of it.
+            button.image = device.duoGlyph(size: Self.duoSize, showBattery: showBattery, showNetwork: showNetwork,
+                                           canvasHeight: NSStatusBar.system.thickness)
+            button.attributedTitle = NSAttributedString()
+        } else if showBars {
             button.image = device.signalGlyph(pointSize: Self.symbolPointSize, showBattery: showBattery,
                                               trailingPadding: showNetwork ? Self.titleSpacing : 0,
                                               canvasHeight: NSStatusBar.system.thickness,
@@ -91,7 +137,9 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         } else {
             button.image = nil
         }
-        button.attributedTitle = showNetwork ? title(device.networkLabel) : NSAttributedString()
+        if style == .classic {
+            button.attributedTitle = showNetwork ? title(device.networkLabel) : NSAttributedString()
+        }
         button.toolTip = String(
             localized: "\(device.name): \(device.networkLabel), signal \(device.signalBars)/4, battery \(device.batteryQuarters)/4",
             comment: "Menu bar item tooltip: iPhone name, network type, signal and battery levels")
@@ -131,7 +179,8 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         }
         for device in monitor.devices {
             let item = NSMenuItem()
-            let header = NSHostingView(rootView: DeviceHeaderView(device: device, showBattery: LabelOption.battery.isEnabled))
+            let header = NSHostingView(rootView: DeviceHeaderView(device: device, style: LabelStyle.current,
+                                                                  showBattery: LabelOption.battery.isEnabled))
             header.frame.size = header.fittingSize
             item.view = header
             menu.addItem(item)
@@ -145,7 +194,17 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         let optionsItem = NSMenuItem(title: String(localized: "Show in Menu Bar", comment: "Menu: display options submenu"),
                                      action: nil, keyEquivalent: "")
         let optionsMenu = NSMenu()
+        for style in LabelStyle.allCases {
+            let item = NSMenuItem(title: style.title, action: #selector(selectStyle(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = style.rawValue
+            item.state = style == LabelStyle.current ? .on : .off
+            optionsMenu.addItem(item)
+        }
+        optionsMenu.addItem(.separator())
+
         let automatic = LabelOption.automatic.isEnabled
+        let isDuo = LabelStyle.current == .duo
         for option in LabelOption.allCases {
             let item = NSMenuItem(title: option.title, action: #selector(toggleOption(_:)), keyEquivalent: "")
             item.target = self
@@ -160,7 +219,8 @@ final class StatusItemController: NSObject, NSMenuDelegate {
                 optionsMenu.addItem(.separator())
             case .signalBars, .networkType:
                 // Manual options don't apply in automatic mode, so they're disabled.
-                if automatic {
+                // In the Duo style the signal dots are always part of the circle.
+                if automatic || (isDuo && option == .signalBars) {
                     item.action = nil
                 }
                 optionsMenu.addItem(item)
@@ -185,6 +245,12 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     @objc private func toggleOption(_ sender: NSMenuItem) {
         guard let raw = sender.representedObject as? String, let option = LabelOption(rawValue: raw) else { return }
         option.isEnabled.toggle()
+        updateButton()
+    }
+
+    @objc private func selectStyle(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String, let style = LabelStyle(rawValue: raw) else { return }
+        LabelStyle.current = style
         updateButton()
     }
 

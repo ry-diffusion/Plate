@@ -25,6 +25,18 @@
         }
       }
     },
+    "Classic" : {
+      "comment" : "Menu bar style option",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Clássico"
+          }
+        }
+      }
+    },
     "iPhone Battery" : {
       "comment" : "Menu bar display option",
       "extractionState" : "manual",
@@ -33,6 +45,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Bateria do iPhone"
+          }
+        }
+      }
+    },
+    "iPhone Duo" : {
+      "comment" : "Menu bar style option",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "iPhone Duo"
           }
         }
       }
@@ -146,7 +170,7 @@
       }
     },
     "Signal %lld of 4, iPhone battery %lld of 4" : {
-      "comment" : "VoiceOver description of the menu bar icon with the battery dots",
+      "comment" : "VoiceOver description of the menu bar icon with the battery marks",
       "extractionState" : "manual",
       "localizations" : {
         "pt-BR" : {

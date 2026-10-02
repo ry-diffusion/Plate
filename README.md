@@ -2,20 +2,27 @@
 
 A macOS menu bar app that shows your iPhone's Instant Hotspot signal, cellular network type (5G, LTE, 4G…) and battery right in the menu bar, without opening the Wi-Fi menu.
 
+Two styles, picked under *Show in Menu Bar*:
+
+- **iPhone Duo** (default), after the iPhone Duo's circular status icon: an open ring for the iPhone battery, the network type (5G/LTE) in the center and 4 dots in the ring's opening for the signal. Off the hotspot, the center shows the Personal Hotspot glyph.
+- **Classic**: signal bars with the network type beside them and the battery marks below.
+
 ```
-▂▄▆█ 5G          (on the hotspot)
-▂▄▆█             (on another Wi-Fi network)
+▂▄▆█ 5G          (Classic, on the hotspot)
+▂▄▆█             (Classic, on another Wi-Fi network)
 ▂▄▆█ 5G
-····             (with iPhone Battery on: one dot under each bar)
+▬▬▬·             (Classic with iPhone Battery on: one mark under each bar)
 ```
+
+When no iPhone is found, both styles keep their shape with every bar or dot faint, like an iPhone with no service.
 
 ## Features
 
 - **Signal bars** (0–4) and **network type** of the iPhone, updated as the iPhone advertises changes.
-- **iPhone battery** (optional, off by default) as a row of 4 dots under the bars (one under each bar), lit left to right. Works in both automatic and manual modes. No percentage: the iPhone only advertises its battery in quarters (0, 25, 50, 75, 100).
+- **iPhone battery** (optional, off by default): the ring in the iPhone Duo style, or a row of 4 marks under the bars in the Classic style (a full quarter is a segment as wide as its bar, an empty one a small faint dot). Works in both automatic and manual modes. No percentage: the iPhone only advertises its battery in quarters (0, 25, 50, 75, 100).
 - **Automatic mode** (default): signal bars always; the network label (5G/LTE) only shows while the Mac is using the iPhone's hotspot.
 - **Manual mode**: pick what shows under *Show in Menu Bar* (signal bars, network type).
-- A menu header per iPhone: the model's real icon, its name, marketing model name (`iPhone18,1` → *iPhone 17 Pro*), network and battery dots. The menu also has the last update time, **Refresh** (⌘R) and **Quit** (⌘Q).
+- A menu header per iPhone: the model's real icon, its name, marketing model name (`iPhone18,1` → *iPhone 17 Pro*), network and battery marks. The menu also has the last update time, **Refresh** (⌘R) and **Quit** (⌘Q).
 - No Dock icon (`LSUIElement`).
 - Localized in English and Brazilian Portuguese (String Catalog).
 
@@ -60,7 +67,7 @@ Newtray/
 ├── NewtrayApp.swift            # App + AppDelegate (no windows)
 ├── StatusItemController.swift  # NSStatusItem, menu and display options
 ├── DeviceHeaderView.swift      # Menu header (SwiftUI)
-├── HotspotDevice+Model.swift   # Marketing name, icon, and signal bars with battery dots
+├── HotspotDevice+Model.swift   # Marketing name, icon, and the iPhone Duo / Classic glyphs
 ├── HotspotMonitor.swift        # SFRemoteHotspotSession + NWPathMonitor
 ├── Localizable.xcstrings       # String Catalog (en, pt-BR)
 └── AppIcon.icon                # App icon (Icon Composer, with dark/clear/tinted variants)
