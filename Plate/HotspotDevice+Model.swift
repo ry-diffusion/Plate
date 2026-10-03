@@ -256,6 +256,111 @@ extension HotspotDevice {
         }
     }
 
+    /// iPhone Duo–style glyph built around the Mac's connection symbol (Wi-Fi
+    /// with its signal, or Ethernet), with the iPhone's signal as 4 dots on a
+    /// shallow curve under it and, optionally, its battery as a thin open ring
+    /// laid over it.
+    ///
+    /// Composed optically rather than at system size: a slightly smaller Wi-Fi,
+    /// a clear gap above larger dots, and the whole group (not just the Wi-Fi)
+    /// centered where the other menu bar icons sit.
+    func duoConnectionGlyph(center: (name: String, level: Double?), pointSize: CGFloat, showBattery: Bool,
+                            canvasHeight: CGFloat) -> NSImage? {
+        // Boxier glyphs (Ethernet) read larger than the Wi-Fi fan at the same size.
+        let size = center.name.hasPrefix("wifi") ? pointSize : pointSize * 0.8
+        let config = NSImage.SymbolConfiguration(pointSize: size, weight: .regular)
+        let base = if let level = center.level {
+            NSImage(systemSymbolName: center.name, variableValue: level, accessibilityDescription: nil)
+        } else {
+            NSImage(systemSymbolName: center.name, accessibilityDescription: nil)
+        }
+        guard let symbol = base?.withSymbolConfiguration(config) else { return nil }
+        let ink = Self.inkRect(of: symbol)
+
+        let height = canvasHeight
+        let width = max(symbol.size.width, height)
+        let bars = signalBars
+        let quarters = batteryQuarters
+
+        // Bottom up: dots (clear of the ~1.5pt the menu bar button clips), a gap,
+        // then the symbol's ink.
+        let dot: CGFloat = 2.4
+        let dotsCenterY: CGFloat = 4.9
+        let gap: CGFloat = 2.2
+        let symbolY = dotsCenterY + dot / 2 + gap - ink.minY
+
+        let image = NSImage(size: NSSize(width: width, height: height), flipped: false) { _ in
+            symbol.draw(in: NSRect(x: (width - symbol.size.width) / 2, y: symbolY,
+                                   width: symbol.size.width, height: symbol.size.height))
+
+            if showBattery {
+                // Thin ring over the symbol, open at the bottom where the dots sit,
+                // filling clockwise from the lower left like the Duo ring.
+                let center = NSPoint(x: width / 2, y: height / 2 + 0.5)
+                let radius = height / 2 - 1.2
+                func arc(sweep: CGFloat) -> NSBezierPath {
+                    let path = NSBezierPath()
+                    path.appendArc(withCenter: center, radius: radius, startAngle: 90 - 240,
+                                   endAngle: 90 - 240 - sweep, clockwise: true)
+                    path.lineWidth = 1.4
+                    path.lineCapStyle = .round
+                    return path
+                }
+                NSColor.black.withAlphaComponent(0.25).setStroke()
+                arc(sweep: 240).stroke()
+                if quarters > 0 {
+                    NSColor.black.setStroke()
+                    arc(sweep: 240 * CGFloat(quarters) / 4).stroke()
+                }
+            }
+
+            // Evenly spaced dots on a shallow curve (outer ones a touch higher),
+            // like the dots following the bottom of the Duo ring.
+            let spacing: CGFloat = 3.4
+            for index in 0..<4 {
+                let dx = (CGFloat(index) - 1.5) * spacing
+                let lift: CGFloat = index == 0 || index == 3 ? 0.6 : 0
+                NSColor.black.withAlphaComponent(index < bars ? 1 : 0.25).setFill()
+                NSBezierPath(ovalIn: NSRect(x: width / 2 + dx - dot / 2, y: dotsCenterY + lift - dot / 2,
+                                            width: dot, height: dot)).fill()
+            }
+            return true
+        }
+        image.isTemplate = true
+        image.accessibilityDescription = showBattery
+            ? String(localized: "Signal \(bars) of 4, iPhone battery \(quarters) of 4",
+                     comment: "VoiceOver description of the menu bar icon with the battery marks")
+            : String(localized: "Signal \(bars) of 4",
+                     comment: "VoiceOver description of the menu bar icon")
+        return image
+    }
+
+    /// Bounds of the drawn pixels inside a symbol image (y up), so glyphs can be
+    /// placed by their ink rather than their padded image box.
+    private static func inkRect(of image: NSImage) -> NSRect {
+        let scale: CGFloat = 4
+        let width = Int(image.size.width * scale), height = Int(image.size.height * scale)
+        guard width > 0, height > 0,
+              let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: width, pixelsHigh: height, bitsPerSample: 8,
+                                         samplesPerPixel: 4, hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB,
+                                         bytesPerRow: 0, bitsPerPixel: 0) else { return NSRect(origin: .zero, size: image.size) }
+        rep.size = image.size
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        image.draw(in: NSRect(origin: .zero, size: image.size))
+        NSGraphicsContext.restoreGraphicsState()
+        var minX = width, maxX = -1, minRow = height, maxRow = -1
+        for y in 0..<height {
+            for x in 0..<width where (rep.colorAt(x: x, y: y)?.alphaComponent ?? 0) > 0.1 {
+                minX = min(minX, x); maxX = max(maxX, x); minRow = min(minRow, y); maxRow = max(maxRow, y)
+            }
+        }
+        guard maxX >= 0 else { return NSRect(origin: .zero, size: image.size) }
+        // Bitmap rows count from the top.
+        return NSRect(x: CGFloat(minX) / scale, y: CGFloat(height - maxRow - 1) / scale,
+                      width: CGFloat(maxX - minX + 1) / scale, height: CGFloat(maxRow - minRow + 1) / scale)
+    }
+
     /// Opacity of bar or dot `index` (0–3) during the searching animation: a
     /// Gaussian glow whose center travels from before the first to past the
     /// last one over a cycle, so every mark fades in and out smoothly and the

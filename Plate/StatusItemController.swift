@@ -65,6 +65,9 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     /// Extra room to the right of the bars for 6pt between them and "5G" (the
     /// button already puts ~5pt between image and title; measured on screen).
     private static let titleSpacing: CGFloat = 0.5
+    /// Wi-Fi size in the iPhone Duo style off the hotspot: a bit under the
+    /// system icon's 15pt so it balances with the signal dots below it.
+    private static let duoWiFiPointSize: CGFloat = 13.5
     /// Diameter of the iPhone Duo–style circle: a bit larger than the system
     /// icons, as big as the menu bar button allows without clipping the dots.
     private static let duoSize: CGFloat = 19
@@ -147,9 +150,9 @@ final class StatusItemController: NSObject, NSMenuDelegate {
                 // (faint dots and no ring when no iPhone is nearby).
                 let device = monitor.device ?? HotspotDevice(id: "", name: "", model: "", networkType: 0,
                                                              signalBars: 0, batteryLevel: 0)
-                button.image = device.duoGlyph(size: Self.duoSize, showBattery: showBattery && monitor.device != nil,
-                                               showNetwork: false, canvasHeight: NSStatusBar.system.thickness,
-                                               centerSymbol: connectionSymbol())
+                button.image = device.duoConnectionGlyph(center: connectionSymbol(), pointSize: Self.duoWiFiPointSize,
+                                                         showBattery: showBattery && monitor.device != nil,
+                                                         canvasHeight: NSStatusBar.system.thickness)
                 button.attributedTitle = NSAttributedString()
                 button.toolTip = connectionDescription()
                 return
