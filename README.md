@@ -1,18 +1,31 @@
-# Plate
+<p align="center">
+  <img src="docs/icon.png" width="128" alt="Plate icon">
+</p>
 
-A macOS menu bar app that replaces the system Wi-Fi menu: it shows Wi-Fi, Ethernet and your iPhone's Instant Hotspot (signal, cellular network type like 5G/LTE, and battery), lists nearby networks and joins them.
+<h1 align="center">Plate</h1>
 
-In the menu bar, the item shows the connection in use: Wi-Fi arcs with the signal, an Ethernet glyph, or Wi-Fi off. While the Mac is on the iPhone's hotspot it shows the iPhone's cellular signal instead, in one of two styles, picked under *Plate › Menu Bar Style*:
+<p align="center">
+  A macOS menu bar app that replaces the system Wi-Fi menu: it shows Wi-Fi, Ethernet and your iPhone's Instant Hotspot (signal, cellular network type like 5G/LTE, and battery), lists nearby networks and joins them.
+</p>
 
-- **iPhone Duo** (default), after the iPhone Duo's circular status icon: an open ring for the iPhone battery, the network type (5G/LTE) in the center and 4 dots in the ring's opening for the signal. Off the hotspot, the center shows the Personal Hotspot glyph.
-- **Classic**: signal bars with the network type beside them and the battery marks below.
+<p align="center">
+  <img src="docs/menu.png" width="720" alt="The Plate menu in light and dark mode: Wi-Fi switch, current network, the iPhone under Personal Hotspot with its signal and 5G, known and other networks">
+</p>
 
-```
-▂▄▆█ 5G          (Classic, on the hotspot)
-▂▄▆█             (Classic, on another Wi-Fi network)
-▂▄▆█ 5G
-▬▬▬·             (Classic with iPhone Battery on: one mark under each bar)
-```
+## In the menu bar
+
+<p align="center">
+  <img src="docs/menubar.png" width="820" alt="Menu bar item in the iPhone Duo and Classic styles, on Wi-Fi and on the iPhone's hotspot, over light and dark menu bars">
+</p>
+
+The item shows the Mac's connection and, when your iPhone is nearby, its cellular signal, in one of two styles picked under *Plate › Menu Bar Style*:
+
+- **iPhone Duo** (default), after the iPhone Duo's circular status icon: the Mac's connection in the center (Wi-Fi with its signal, Ethernet, or the network type like 5G/LTE while on the iPhone's hotspot), the iPhone's signal in the 4 dots, and its battery in the open ring.
+- **Classic**: the iPhone's signal bars beside the Wi-Fi or Ethernet icon, spaced like separate menu bar items. On the hotspot, the bars with the network type next to them, and the battery as marks under the bars.
+
+<p align="center">
+  <img src="docs/searching.gif" width="220" alt="Searching for network animation: a wave across short bars in Classic and across the dots in iPhone Duo">
+</p>
 
 When no iPhone is found, both styles show short faint bars (or faint dots), like an iPhone with no service. While the Mac is on the hotspot, a wave sweeps across them, like the iPhone's "searching for network" animation: in Classic each bar grows to its height in the staircase and shrinks back. The animation runs on Core Animation, so it costs no CPU.
 
@@ -81,6 +94,7 @@ Plate/
 ├── HotspotMonitor.swift        # SFRemoteHotspotSession + NWPathMonitor
 ├── Localizable.xcstrings       # String Catalog (en, pt-BR)
 └── Plate Icon.icon             # App icon (Icon Composer: Duo circle, with a Dark Background group)
+docs/                           # README images and the script that renders them
 ```
 
 ## Building
