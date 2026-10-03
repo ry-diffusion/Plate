@@ -378,7 +378,11 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSLocationUsageDescription = "Newtray needs Location to show the names of nearby Wi-Fi networks. macOS treats them as location data.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Newtray needs Location to show the names of nearby Wi-Fi networks. macOS treats them as location data.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -411,7 +415,11 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				ENABLE_RESOURCE_ACCESS_LOCATION = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSLocationUsageDescription = "Newtray needs Location to show the names of nearby Wi-Fi networks. macOS treats them as location data.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Newtray needs Location to show the names of nearby Wi-Fi networks. macOS treats them as location data.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

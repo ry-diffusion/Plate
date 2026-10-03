@@ -23,6 +23,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         LaunchAtLogin.enableOnFirstLaunch()
-        statusItemController = StatusItemController(monitor: HotspotMonitor())
+        statusItemController = StatusItemController(monitor: HotspotMonitor(), network: NetworkMonitor())
     }
 }

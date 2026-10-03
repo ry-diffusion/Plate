@@ -51,13 +51,16 @@ final class HotspotMonitor {
     var device: HotspotDevice? { devices.first }
 
     private var session: NSObject?
+    /// The SFRemoteHotspotDevice behind each device, needed to turn its hotspot on.
+    private var sharingDevices: [String: NSObject] = [:]
     private let delegate = SessionDelegate()
     private var refreshTimer: Timer?
     private let pathMonitor = NWPathMonitor()
 
     init() {
-        delegate.onUpdate = { [weak self] devices in
-            self?.devices = devices
+        delegate.onUpdate = { [weak self] found in
+            self?.devices = found.map(\.device)
+            self?.sharingDevices = Dictionary(found.map { ($0.device.id, $0.object) }, uniquingKeysWith: { a, _ in a })
             self?.lastUpdate = .now
         }
         pathMonitor.pathUpdateHandler = { [weak self] path in
@@ -93,17 +96,50 @@ final class HotspotMonitor {
         session?.perform(NSSelectorFromString("stopBrowsing"))
         session?.perform(NSSelectorFromString("startBrowsing"))
     }
+
+    /// The Wi-Fi network the iPhone's hotspot broadcasts once it's on.
+    struct HotspotCredentials {
+        let ssid: String
+        let password: String?
+    }
+
+    /// Asks the iPhone to turn its Personal Hotspot on, the way the Wi-Fi menu
+    /// does, and returns the network to join.
+    func enableHotspot(on device: HotspotDevice) async throws -> HotspotCredentials {
+        guard let session, let target = sharingDevices[device.id] else {
+            throw NSError(domain: "Newtray", code: 1)
+        }
+        let selector = NSSelectorFromString("enableHotspotForDevice:withCompletionHandler:")
+        return try await withCheckedThrowingContinuation { continuation in
+            // -enableHotspotForDevice:withCompletionHandler: replies with an
+            // SFRemoteHotspotInfo (name, password, channel) or an error.
+            let completion: @convention(block) (AnyObject?, NSError?) -> Void = { info, error in
+                if let error {
+                    continuation.resume(throwing: error)
+                } else if let info = info as? NSObject, let ssid = info.value(forKey: "name") as? String {
+                    continuation.resume(returning: HotspotCredentials(ssid: ssid, password: info.value(forKey: "password") as? String))
+                } else {
+                    continuation.resume(throwing: NSError(domain: "Newtray", code: 2))
+                }
+            }
+            session.perform(selector, with: target, with: completion)
+        }
+    }
 }
 
 private final class SessionDelegate: NSObject {
-    var onUpdate: (([HotspotDevice]) -> Void)?
+    var onUpdate: (([(device: HotspotDevice, object: NSObject)]) -> Void)?
 
     /// Called by SFRemoteHotspotSession on an XPC queue.
     @objc(session:updatedFoundDevices:)
     nonisolated func session(_ session: AnyObject, updatedFoundDevices devices: NSArray) {
-        let parsed = devices.compactMap { ($0 as? NSObject).flatMap(HotspotDevice.init(sharingDevice:)) }
+        let parsed = devices.compactMap { item -> (device: HotspotDevice, object: NSObject)? in
+            guard let object = item as? NSObject, let device = HotspotDevice(sharingDevice: object) else { return nil }
+            return (device, object)
+        }
+        nonisolated(unsafe) let found = parsed
         DispatchQueue.main.async {
-            MainActor.assumeIsolated { self.onUpdate?(parsed) }
+            MainActor.assumeIsolated { self.onUpdate?(found) }
         }
     }
 }

@@ -13,6 +13,18 @@
         }
       }
     },
+    "Allow Location to Show Network Names…" : {
+      "comment" : "Menu: open Location privacy settings",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Permitir Localização para Mostrar os Nomes das Redes…"
+          }
+        }
+      }
+    },
     "Automatic" : {
       "comment" : "Menu bar display option",
       "extractionState" : "manual",
@@ -25,6 +37,18 @@
         }
       }
     },
+    "Cancel" : {
+      "comment" : "Password prompt: cancel",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cancelar"
+          }
+        }
+      }
+    },
     "Classic" : {
       "comment" : "Menu bar style option",
       "extractionState" : "manual",
@@ -33,6 +57,42 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Clássico"
+          }
+        }
+      }
+    },
+    "Connected" : {
+      "comment" : "Menu: the Mac is using this network",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conectado"
+          }
+        }
+      }
+    },
+    "Couldn’t join “%@”." : {
+      "comment" : "Join error title",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível conectar a “%@”."
+          }
+        }
+      }
+    },
+    "Ethernet" : {
+      "comment" : "Network interface name",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ethernet"
           }
         }
       }
@@ -61,6 +121,66 @@
         }
       }
     },
+    "Join" : {
+      "comment" : "Password prompt: confirm",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Conectar"
+          }
+        }
+      }
+    },
+    "Known Networks" : {
+      "comment" : "Menu section",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Redes Conhecidas"
+          }
+        }
+      }
+    },
+    "Menu Bar Style" : {
+      "comment" : "Menu section: Duo or Classic",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estilo na Barra"
+          }
+        }
+      }
+    },
+    "More Networks" : {
+      "comment" : "Menu: submenu with the remaining networks",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mais Redes"
+          }
+        }
+      }
+    },
+    "Network Settings…" : {
+      "comment" : "Menu: open System Settings › Network",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajustes de Rede…"
+          }
+        }
+      }
+    },
     "Network Type (5G/LTE)" : {
       "comment" : "Menu bar display option",
       "extractionState" : "manual",
@@ -85,26 +205,62 @@
         }
       }
     },
-    "Off the hotspot: bars only" : {
-      "comment" : "Automatic mode state",
+    "No other networks" : {
+      "comment" : "Menu: empty list",
       "extractionState" : "manual",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Fora do hotspot: só a torre"
+            "value" : "Nenhuma outra rede"
           }
         }
       }
     },
-    "On the hotspot: bars and network" : {
-      "comment" : "Automatic mode state",
+    "Not connected" : {
+      "comment" : "Menu bar tooltip: Wi-Fi on but no network",
       "extractionState" : "manual",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Usando o hotspot: torre e rede"
+            "value" : "Não conectado"
+          }
+        }
+      }
+    },
+    "Off" : {
+      "comment" : "Switch state",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desligado"
+          }
+        }
+      }
+    },
+    "On" : {
+      "comment" : "Switch state",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ligado"
+          }
+        }
+      }
+    },
+    "On the Hotspot" : {
+      "comment" : "Menu section: what shows while on the iPhone's hotspot",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No Hotspot"
           }
         }
       }
@@ -121,14 +277,50 @@
         }
       }
     },
-    "Quit" : {
+    "Other Networks" : {
+      "comment" : "Menu: submenu of unknown networks",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outras Redes"
+          }
+        }
+      }
+    },
+    "Password" : {
+      "comment" : "Password prompt: field placeholder",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Senha"
+          }
+        }
+      }
+    },
+    "Personal Hotspot" : {
+      "comment" : "Menu section",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hotspot Pessoal"
+          }
+        }
+      }
+    },
+    "Quit Newtray" : {
       "comment" : "Menu: quit the app",
       "extractionState" : "manual",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sair"
+            "value" : "Sair do Newtray"
           }
         }
       }
@@ -145,26 +337,38 @@
         }
       }
     },
-    "Sharing.framework unavailable" : {
-      "comment" : "Menu: the private framework could not be loaded",
+    "Scanning…" : {
+      "comment" : "Menu: Wi-Fi scan in progress",
       "extractionState" : "manual",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sharing.framework indisponível"
+            "value" : "Procurando…"
           }
         }
       }
     },
-    "Show in Menu Bar" : {
-      "comment" : "Menu: display options submenu",
+    "Secured" : {
+      "comment" : "VoiceOver: the network needs a password",
       "extractionState" : "manual",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mostrar na barra"
+            "value" : "Protegida"
+          }
+        }
+      }
+    },
+    "Show Network Names…" : {
+      "comment" : "Menu: ask for Location access",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostrar os Nomes das Redes…"
           }
         }
       }
@@ -205,14 +409,38 @@
         }
       }
     },
-    "Updated %@" : {
-      "comment" : "Menu: time of the last update",
+    "The Wi-Fi network “%@” requires a password." : {
+      "comment" : "Password prompt title",
       "extractionState" : "manual",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Atualizado %@"
+            "value" : "A rede Wi-Fi “%@” precisa de senha."
+          }
+        }
+      }
+    },
+    "Wi-Fi" : {
+      "comment" : "Network interface name",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wi-Fi"
+          }
+        }
+      }
+    },
+    "Wi-Fi is off" : {
+      "comment" : "Menu bar tooltip",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Wi-Fi desligado"
           }
         }
       }
