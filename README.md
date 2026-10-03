@@ -80,7 +80,7 @@ Plate/
 ├── SearchAnimationView.swift   # "Searching for network" animation (Core Animation)
 ├── HotspotMonitor.swift        # SFRemoteHotspotSession + NWPathMonitor
 ├── Localizable.xcstrings       # String Catalog (en, pt-BR)
-└── AppIcon.icon                # App icon (Icon Composer, with dark/clear/tinted variants)
+└── Plate Icon.icon             # App icon (Icon Composer: Duo circle, with a Dark Background group)
 ```
 
 ## Building
