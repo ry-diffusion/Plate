@@ -77,7 +77,7 @@ import UniformTypeIdentifiers
       .draw(in: NSRect(x: p.x, y: p.y + dy, width: img.size.width, height: img.size.height)); return img.size.width
   }
   let states: [State] = [
-    State(caption: "iPhone Duo · Wi-Fi") { p, c in drawTemplate(phone.duoConnectionGlyph(center: ("wifi", 1), pointSize: 13.5, showBattery: true, canvasHeight: thickness)!, at: p, c) },
+    State(caption: "iPhone Duo · Wi-Fi") { p, c in drawTemplate(phone.duoConnectionGlyph(center: ("wifi", 1), pointSize: 11, showBattery: true, canvasHeight: thickness)!, at: p, c) },
     State(caption: "iPhone Duo · on the hotspot") { p, c in drawTemplate(phone.duoGlyph(size: 19, showBattery: true, showNetwork: true, canvasHeight: thickness), at: p, c) },
     State(caption: "Classic · Wi-Fi") { p, c in
       var w = drawTemplate(tower, at: p, c); w += 17

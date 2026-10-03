@@ -30,7 +30,7 @@ If you tether to your iPhone, you know the drill: open the Wi-Fi menu just to ch
   <img src="docs/menubar.png" width="820" alt="Menu bar item in the iPhone Duo and Classic styles, on Wi-Fi and on the iPhone's hotspot, over light and dark menu bars">
 </p>
 
-- **iPhone Duo** (default) borrows the round status icon from iPhone Duo: your Wi-Fi in the middle, your iPhone's signal as the little dots below, and its battery as the ring around it. On the hotspot, the middle shows 5G or LTE instead.
+- **iPhone Duo** (default) borrows the round status icon from iPhone Duo: your Wi-Fi inside a ring, your iPhone's signal as the little dots at the bottom, and, if you turn it on, its battery as the ring itself. On the hotspot, the middle shows 5G or LTE instead.
 - **Classic** shows your iPhone's signal bars next to the Wi-Fi icon, like two separate menu bar icons. On the hotspot you see the bars with "5G" beside them.
 
 Switch between them under **Plate › Menu Bar Style**.

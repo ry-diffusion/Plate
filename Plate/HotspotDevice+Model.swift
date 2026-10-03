@@ -257,18 +257,17 @@ extension HotspotDevice {
     }
 
     /// iPhone Duo–style glyph built around the Mac's connection symbol (Wi-Fi
-    /// with its signal, or Ethernet), with the iPhone's signal as 4 dots on a
-    /// shallow curve under it and, optionally, its battery as a thin open ring
-    /// laid over it.
+    /// with its signal, or Ethernet): the symbol inside an open ring, with the
+    /// iPhone's signal as 4 dots in the ring's bottom opening.
     ///
-    /// Composed optically rather than at system size: a slightly smaller Wi-Fi,
-    /// a clear gap above larger dots, and the whole group (not just the Wi-Fi)
-    /// centered where the other menu bar icons sit.
+    /// The ring is always there, like on iPhone Duo. With `showBattery` it shows
+    /// the iPhone's battery (a faint track filled clockwise from the lower left);
+    /// without it, it's a plain outline.
     func duoConnectionGlyph(center: (name: String, level: Double?), pointSize: CGFloat, showBattery: Bool,
                             canvasHeight: CGFloat) -> NSImage? {
         // Boxier glyphs (Ethernet) read larger than the Wi-Fi fan at the same size.
         let size = center.name.hasPrefix("wifi") ? pointSize : pointSize * 0.8
-        let config = NSImage.SymbolConfiguration(pointSize: size, weight: .regular)
+        let config = NSImage.SymbolConfiguration(pointSize: size, weight: .semibold)
         let base = if let level = center.level {
             NSImage(systemSymbolName: center.name, variableValue: level, accessibilityDescription: nil)
         } else {
@@ -278,50 +277,49 @@ extension HotspotDevice {
         let ink = Self.inkRect(of: symbol)
 
         let height = canvasHeight
-        let width = max(symbol.size.width, height)
         let bars = signalBars
         let quarters = batteryQuarters
 
-        // Bottom up: dots (clear of the ~1.5pt the menu bar button clips), a gap,
-        // then the symbol's ink.
-        let dot: CGFloat = 2.4
-        let dotsCenterY: CGFloat = 4.9
-        let gap: CGFloat = 2.2
-        let symbolY = dotsCenterY + dot / 2 + gap - ink.minY
+        // Ring sized so the dots in its opening stay clear of the ~1.5pt the
+        // menu bar button clips off the bottom.
+        let dot: CGFloat = 2.6
+        let radius: CGFloat = 9.8
+        let lineWidth: CGFloat = 1.5
+        let width = (radius + lineWidth) * 2
+        let ringCenter = NSPoint(x: width / 2, y: 3.2 + radius * 0.82)
 
         let image = NSImage(size: NSSize(width: width, height: height), flipped: false) { _ in
-            symbol.draw(in: NSRect(x: (width - symbol.size.width) / 2, y: symbolY,
+            // The symbol's ink centered in the ring, a hair above for optical balance.
+            let inkCenterY = ringCenter.y + 0.6
+            symbol.draw(in: NSRect(x: (width - symbol.size.width) / 2 + (symbol.size.width / 2 - ink.midX),
+                                   y: inkCenterY - ink.midY,
                                    width: symbol.size.width, height: symbol.size.height))
 
+            func arc(sweep: CGFloat) -> NSBezierPath {
+                let path = NSBezierPath()
+                path.appendArc(withCenter: ringCenter, radius: radius, startAngle: 90 - 240,
+                               endAngle: 90 - 240 - sweep, clockwise: true)
+                path.lineWidth = lineWidth
+                path.lineCapStyle = .round
+                return path
+            }
             if showBattery {
-                // Thin ring over the symbol, open at the bottom where the dots sit,
-                // filling clockwise from the lower left like the Duo ring.
-                let center = NSPoint(x: width / 2, y: height / 2 + 0.5)
-                let radius = height / 2 - 1.2
-                func arc(sweep: CGFloat) -> NSBezierPath {
-                    let path = NSBezierPath()
-                    path.appendArc(withCenter: center, radius: radius, startAngle: 90 - 240,
-                                   endAngle: 90 - 240 - sweep, clockwise: true)
-                    path.lineWidth = 1.4
-                    path.lineCapStyle = .round
-                    return path
-                }
                 NSColor.black.withAlphaComponent(0.25).setStroke()
                 arc(sweep: 240).stroke()
                 if quarters > 0 {
                     NSColor.black.setStroke()
                     arc(sweep: 240 * CGFloat(quarters) / 4).stroke()
                 }
+            } else {
+                NSColor.black.setStroke()
+                arc(sweep: 240).stroke()
             }
 
-            // Evenly spaced dots on a shallow curve (outer ones a touch higher),
-            // like the dots following the bottom of the Duo ring.
-            let spacing: CGFloat = 3.4
-            for index in 0..<4 {
-                let dx = (CGFloat(index) - 1.5) * spacing
-                let lift: CGFloat = index == 0 || index == 3 ? 0.6 : 0
+            // Dots in the opening, following its curve (outer ones a touch higher).
+            let offsets: [(CGFloat, CGFloat)] = [(-5.1, 0.7), (-1.7, 0), (1.7, 0), (5.1, 0.7)]
+            for (index, (dx, lift)) in offsets.enumerated() {
                 NSColor.black.withAlphaComponent(index < bars ? 1 : 0.25).setFill()
-                NSBezierPath(ovalIn: NSRect(x: width / 2 + dx - dot / 2, y: dotsCenterY + lift - dot / 2,
+                NSBezierPath(ovalIn: NSRect(x: width / 2 + dx - dot / 2, y: 3.2 + lift - dot / 2,
                                             width: dot, height: dot)).fill()
             }
             return true
