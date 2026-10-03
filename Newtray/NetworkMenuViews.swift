@@ -55,7 +55,7 @@ struct MenuSwitch: View {
 
 /// A network row like the system Wi-Fi menu's: a round badge with the signal
 /// (filled with the accent color for the network in use), the name, and a lock
-/// when it needs a password. Clickable unless it's the current one.
+/// when it needs a password. Highlight and clicks come from MenuRowHostView.
 struct NetworkRowView: View {
     let name: String
     /// SF Symbol for the badge, e.g. "wifi" or the Ethernet glyph.
@@ -67,9 +67,6 @@ struct NetworkRowView: View {
     var isCurrent = false
     /// Shown at the trailing edge instead of the lock, e.g. the iPhone's signal.
     var accessory: AnyView?
-    var onSelect: (() -> Void)?
-
-    @State private var isHovering = false
 
     var body: some View {
         HStack(spacing: 10) {
@@ -113,14 +110,6 @@ struct NetworkRowView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 3)
         .frame(width: menuRowWidth, alignment: .leading)
-        .background {
-            RoundedRectangle(cornerRadius: 6, style: .continuous)
-                .fill(isHovering && onSelect != nil ? Color.primary.opacity(0.1) : .clear)
-                .padding(.horizontal, 5)
-        }
-        .contentShape(Rectangle())
-        .onHover { isHovering = $0 }
-        .onTapGesture { onSelect?() }
     }
 }
 

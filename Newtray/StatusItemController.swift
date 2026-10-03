@@ -65,13 +65,15 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     /// Extra room to the right of the bars for 6pt between them and "5G" (the
     /// button already puts ~5pt between image and title; measured on screen).
     private static let titleSpacing: CGFloat = 0.5
-    /// Diameter of the iPhone Duo–style circle, close to the system icons' height.
-    private static let duoSize: CGFloat = 17.5
+    /// Diameter of the iPhone Duo–style circle: a bit larger than the system
+    /// icons, as big as the menu bar button allows without clipping the dots.
+    private static let duoSize: CGFloat = 19
 
     private let monitor: HotspotMonitor
     private let network: NetworkMonitor
     /// The menu while it's open, so it can be rebuilt as scan results arrive.
     private weak var openMenu: NSMenu?
+    private var builtMenuSignature: String?
     /// The "searching for network" animation shown while no iPhone is found,
     /// and the style and appearance it was built for.
     private var searchView: SearchAnimationView?
@@ -97,13 +99,26 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     private func observeMonitor() {
         withObservationTracking {
             updateButton()
-            // Keeps the open menu in step with scans, joins and the iPhone.
-            if let openMenu {
+            // Keeps the open menu in step with scans, joins and the iPhone, but
+            // only rebuilds it when something it shows changes: RSSI ticks every
+            // second, and rebuilding that often would fight the pointer.
+            let signature = menuSignature()
+            if let openMenu, signature != builtMenuSignature {
                 buildMenu(openMenu)
             }
         } onChange: { [weak self] in
-            DispatchQueue.main.async { self?.observeMonitor() }
+            onMainRunLoop { [weak self] in self?.observeMonitor() }
         }
+    }
+
+    /// Everything the menu shows, so it's rebuilt only when this changes.
+    private func menuSignature() -> String {
+        let networks = network.networks.map { "\($0.ssid)\($0.bars)\($0.isKnown)" }.joined(separator: ",")
+        let devices = monitor.devices.map { "\($0.id)\($0.signalBars)\($0.networkType)\($0.batteryQuarters)" }.joined(separator: ",")
+        return [String(network.wifiPowerOn), network.currentSSID ?? "", String(WiFiNetwork.bars(rssi: network.wifiRSSI)),
+                String(network.isWiFiAssociated), String(network.isScanning), String(describing: network.connection),
+                network.primaryAddress ?? "", String(network.locationStatus.rawValue), String(monitor.isUsingHotspot),
+                networks, devices].joined(separator: "|")
     }
 
     private func updateButton() {
@@ -122,10 +137,29 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
         let style = LabelStyle.current
         // Off the iPhone's hotspot, the item shows the connection in use, like
-        // the system Wi-Fi item it replaces.
+        // the system Wi-Fi item it replaces, with the iPhone's signal before it
+        // when the iPhone is nearby.
         if !monitor.isUsingHotspot {
             stopSearchAnimation()
-            button.image = connectionGlyph()
+            if style == .duo {
+                // One circle, like iPhone Duo: the Mac's connection in the center,
+                // the iPhone's signal in the dots and its battery in the ring
+                // (faint dots and no ring when no iPhone is nearby).
+                let device = monitor.device ?? HotspotDevice(id: "", name: "", model: "", networkType: 0,
+                                                             signalBars: 0, batteryLevel: 0)
+                button.image = device.duoGlyph(size: Self.duoSize, showBattery: showBattery && monitor.device != nil,
+                                               showNetwork: false, canvasHeight: NSStatusBar.system.thickness,
+                                               centerSymbol: connectionSymbol())
+                button.attributedTitle = NSAttributedString()
+                button.toolTip = connectionDescription()
+                return
+            }
+            let connection = connectionGlyph()
+            if let device = monitor.device, let connection, let cellular = cellularGlyph(device, style: style, showBattery: showBattery) {
+                button.image = Self.sideBySide(cellular, connection, spacing: Self.glyphSpacing)
+            } else {
+                button.image = connection
+            }
             button.attributedTitle = NSAttributedString()
             button.toolTip = connectionDescription()
             return
@@ -174,17 +208,52 @@ final class StatusItemController: NSObject, NSMenuDelegate {
             comment: "Menu bar item tooltip: iPhone name, network type, signal and battery levels")
     }
 
-    /// Wi-Fi with its signal, Ethernet, or Wi-Fi off/disconnected.
-    private func connectionGlyph() -> NSImage? {
-        let glyph = switch network.connection {
-        case .ethernet:
-            symbol("rectangle.connected.to.line.below")
-        case .wifi:
-            symbol("wifi", variableValue: Double(WiFiNetwork.bars(rssi: network.wifiRSSI)) / 3)
-        case .other, .none:
-            network.wifiPowerOn ? symbol("wifi", variableValue: 0) : symbol("wifi.slash")
+    /// Gap between the iPhone's signal and the connection glyph, so the ink
+    /// gap between them (~42px on a Retina menu bar) matches the one between
+    /// neighboring menu bar items (36–58px, mostly 40–46px; measured on screen).
+    private static let glyphSpacing: CGFloat = 17
+
+    /// The iPhone's signal on its own (no network label), in the chosen style.
+    private func cellularGlyph(_ device: HotspotDevice, style: LabelStyle, showBattery: Bool) -> NSImage? {
+        let thickness = NSStatusBar.system.thickness
+        return switch style {
+        case .duo:
+            device.duoGlyph(size: Self.duoSize, showBattery: showBattery, showNetwork: false, canvasHeight: thickness)
+        case .classic:
+            device.signalGlyph(pointSize: Self.symbolPointSize, showBattery: showBattery,
+                               canvasHeight: thickness, verticalOffset: 0.5)
         }
-        return glyph.map { raised($0, by: 1) }
+    }
+
+    /// Two template glyphs as tall as the menu bar button, side by side.
+    private static func sideBySide(_ first: NSImage, _ second: NSImage, spacing: CGFloat) -> NSImage {
+        let height = max(first.size.height, second.size.height)
+        let image = NSImage(size: NSSize(width: first.size.width + spacing + second.size.width, height: height),
+                            flipped: false) { _ in
+            first.draw(in: NSRect(x: 0, y: (height - first.size.height) / 2, width: first.size.width, height: first.size.height))
+            second.draw(in: NSRect(x: first.size.width + spacing, y: (height - second.size.height) / 2,
+                                   width: second.size.width, height: second.size.height))
+            return true
+        }
+        image.isTemplate = true
+        image.accessibilityDescription = [first.accessibilityDescription, second.accessibilityDescription]
+            .compactMap { $0 }.joined(separator: ", ")
+        return image
+    }
+
+    /// The symbol for the connection in use: Wi-Fi with its signal, Ethernet,
+    /// or Wi-Fi off/disconnected.
+    private func connectionSymbol() -> (name: String, level: Double?) {
+        switch network.connection {
+        case .ethernet: ("rectangle.connected.to.line.below", nil)
+        case .wifi: ("wifi", Double(WiFiNetwork.bars(rssi: network.wifiRSSI)) / 3)
+        case .other, .none: network.wifiPowerOn ? ("wifi", 0) : ("wifi.slash", nil)
+        }
+    }
+
+    private func connectionGlyph() -> NSImage? {
+        let connection = connectionSymbol()
+        return symbol(connection.name, variableValue: connection.level).map { raised($0, by: 1) }
     }
 
     /// Centers a symbol in a canvas as tall as the menu bar button, raised by
@@ -266,9 +335,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         appearanceObservation = button.observe(\.effectiveAppearance) { [weak self] button, _ in
             let nowDark = button.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
             guard nowDark != isDark else { return }
-            DispatchQueue.main.async {
-                MainActor.assumeIsolated { self?.updateButton() }
-            }
+            onMainRunLoop { [weak self] in self?.updateButton() }
         }
     }
 
@@ -316,12 +383,24 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     }
 
     private func buildMenu(_ menu: NSMenu) {
+        let fresh = NSMenu()
+        fresh.autoenablesItems = false
+        addWiFiSection(to: fresh)
+        addHotspotSection(to: fresh)
+        addNetworkSections(to: fresh)
+        addEthernetSection(to: fresh)
+        addFooter(to: fresh)
+
+        // An open menu doesn't shrink its window when its content gets shorter,
+        // which leaves an empty gap at the bottom. Shorter updates wait for the
+        // next time it opens; same-height or taller ones apply right away.
+        if menu === openMenu, fresh.size.height < menu.size.height - 0.5 { return }
+
+        builtMenuSignature = menuSignature()
+        let items = fresh.items
+        fresh.removeAllItems()
         menu.removeAllItems()
-        addWiFiSection(to: menu)
-        addHotspotSection(to: menu)
-        addNetworkSections(to: menu)
-        addEthernetSection(to: menu)
-        addFooter(to: menu)
+        items.forEach(menu.addItem)
     }
 
     /// Most networks shown inline under "Other Networks"; the rest go in a submenu.
@@ -361,8 +440,8 @@ final class StatusItemController: NSObject, NSMenuDelegate {
                 : device.modelName
             menu.addItem(hostedItem(NetworkRowView(
                 name: device.name, symbol: "personalhotspot", detail: detail, isCurrent: isConnected,
-                accessory: AnyView(CellularStatusView(device: device, showBattery: showBattery)),
-                onSelect: isConnected ? nil : { [weak self] in self?.joinHotspot(device) })))
+                accessory: AnyView(CellularStatusView(device: device, showBattery: showBattery))),
+                onSelect: isConnected ? nil : { [weak self] in self?.joinHotspot(device) }))
         }
     }
 
@@ -464,20 +543,20 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
     // MARK: - Menu items
 
-    private func hostedItem(_ view: some View) -> NSMenuItem {
+    /// A menu item showing a SwiftUI row. With `onSelect` it highlights like a
+    /// normal item and runs it when picked.
+    private func hostedItem(_ view: some View, onSelect: (() -> Void)? = nil) -> NSMenuItem {
         let item = NSMenuItem()
-        let host = NSHostingView(rootView: view)
-        host.frame.size = host.fittingSize
-        item.view = host
+        item.view = MenuRowHostView(rootView: view, onSelect: onSelect)
+        item.isEnabled = onSelect != nil
         return item
     }
 
     /// A network row; clicking it joins the network.
     private func networkItem(_ wifi: WiFiNetwork) -> NSMenuItem {
-        hostedItem(NetworkRowView(name: wifi.ssid, level: Double(wifi.bars) / 3, isSecure: wifi.isSecure) { [weak self] in
-            self?.statusItem.menu?.cancelTracking()
+        hostedItem(NetworkRowView(name: wifi.ssid, level: Double(wifi.bars) / 3, isSecure: wifi.isSecure)) { [weak self] in
             self?.join(wifi)
-        })
+        }
     }
 
     // MARK: - Actions
@@ -504,7 +583,6 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     }
 
     private func joinHotspot(_ device: HotspotDevice) {
-        openMenu?.cancelTracking()
         Task {
             do {
                 let credentials = try await monitor.enableHotspot(on: device)

@@ -99,14 +99,12 @@ final class NetworkMonitor: NSObject {
             }
             // The first available interface is the one the path prefers.
             let name = path.availableInterfaces.first { $0.type != .other }?.name
-            DispatchQueue.main.async {
-                MainActor.assumeIsolated {
-                    guard let self else { return }
-                    self.connection = connection
-                    self.primaryInterface = name
-                    self.primaryAddress = name.flatMap(Self.ipv4Address(of:))
-                    self.refreshWiFi()
-                }
+            onMainRunLoop { [weak self] in
+                guard let self else { return }
+                self.connection = connection
+                self.primaryInterface = name
+                self.primaryAddress = name.flatMap(Self.ipv4Address(of:))
+                self.refreshWiFi()
             }
         }
         pathMonitor.start(queue: .global(qos: .utility))
@@ -160,13 +158,11 @@ final class NetworkMonitor: NSObject {
             }
             .sorted { $0.rssi > $1.rssi }
 
-            DispatchQueue.main.async {
-                MainActor.assumeIsolated {
-                    guard let self else { return }
-                    self.networks = networks
-                    self.isScanning = false
-                    self.lastScan = .now
-                }
+            onMainRunLoop { [weak self] in
+                guard let self else { return }
+                self.networks = networks
+                self.isScanning = false
+                self.lastScan = .now
             }
         }
     }
@@ -241,21 +237,17 @@ extension NetworkMonitor: CWEventDelegate {
 
     /// CoreWLAN calls the delegate on its own queue.
     nonisolated private func refreshSoon() {
-        DispatchQueue.main.async {
-            MainActor.assumeIsolated { self.refreshWiFi() }
-        }
+        onMainRunLoop { self.refreshWiFi() }
     }
 }
 
 extension NetworkMonitor: CLLocationManagerDelegate {
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         let status = manager.authorizationStatus
-        DispatchQueue.main.async {
-            MainActor.assumeIsolated {
-                self.locationStatus = status
-                self.refreshWiFi()
-                self.scan(force: true)
-            }
+        onMainRunLoop {
+            self.locationStatus = status
+            self.refreshWiFi()
+            self.scan(force: true)
         }
     }
 }

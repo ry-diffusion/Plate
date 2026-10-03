@@ -122,11 +122,18 @@ extension HotspotDevice {
     /// center and 4 faint dots, like an iPhone with no service.
     /// `searchPhase` (0–1) sweeps a soft glow across the signal dots, for the
     /// "searching for network" animation.
+    ///
+    /// `centerSymbol` puts a symbol in the middle instead of the network label,
+    /// like the iPhone Duo's Wi-Fi fan: the Mac's Wi-Fi with its signal, or
+    /// Ethernet, while it isn't on the hotspot.
     func duoGlyph(size: CGFloat, showBattery: Bool, showNetwork: Bool, canvasHeight: CGFloat? = nil,
-                  isPlaceholder: Bool = false, searchPhase: CGFloat? = nil) -> NSImage {
+                  isPlaceholder: Bool = false, searchPhase: CGFloat? = nil,
+                  centerSymbol: (name: String, level: Double?)? = nil) -> NSImage {
         let iconHeight = size * 1.04
         let height = max(canvasHeight ?? iconHeight, iconHeight)
-        let originY = ((height - iconHeight) / 2).rounded()
+        // The menu bar button clips ~1.5pt off the bottom, so the dots keep at
+        // least that much room below them.
+        let originY = max(((height - iconHeight) / 2).rounded(), canvasHeight == nil ? 0 : 1.5)
         let bars = signalBars
         let quarters = batteryQuarters
         let label = networkLabel
@@ -173,6 +180,20 @@ extension HotspotDevice {
                 let textSize = text.size()
                 text.draw(at: NSPoint(x: center.x - textSize.width / 2,
                                       y: contentCenterY - font.capHeight / 2 + font.descender))
+            } else if let centerSymbol {
+                let base = if let level = centerSymbol.level {
+                    NSImage(systemSymbolName: centerSymbol.name, variableValue: level, accessibilityDescription: nil)
+                } else {
+                    NSImage(systemSymbolName: centerSymbol.name, accessibilityDescription: nil)
+                }
+                // Sized so the Wi-Fi fan spans ~56% of the circle, as on iPhone Duo;
+                // other glyphs (Ethernet) are boxier, so they get a smaller size.
+                let scale: CGFloat = centerSymbol.name.hasPrefix("wifi") ? 0.44 : 0.36
+                if let symbol = base?.withSymbolConfiguration(.init(pointSize: size * scale, weight: .semibold)) {
+                    symbol.draw(in: NSRect(x: center.x - symbol.size.width / 2, y: contentCenterY - symbol.size.height / 2,
+                                           width: symbol.size.width, height: symbol.size.height),
+                                from: .zero, operation: .sourceOver, fraction: isPlaceholder ? 0.25 : 1)
+                }
             } else if let hotspot = NSImage(systemSymbolName: "personalhotspot", accessibilityDescription: nil)?
                 .withSymbolConfiguration(.init(pointSize: size * 0.4, weight: .semibold)) {
                 // Off the hotspot there's no network label; the hotspot glyph keeps the center from looking empty.
@@ -228,7 +249,7 @@ extension HotspotDevice {
     static func duoDotRects(size: CGFloat, canvasHeight: CGFloat) -> [NSRect] {
         let iconHeight = size * 1.04
         let height = max(canvasHeight, iconHeight)
-        let originY = ((height - iconHeight) / 2).rounded()
+        let originY = max(((height - iconHeight) / 2).rounded(), 1.5)
         let dot = 0.10 * size
         return [(0.26, 0.92), (0.42, 0.975), (0.58, 0.975), (0.74, 0.92)].map { x, y in
             NSRect(x: x * size - dot / 2, y: originY + iconHeight - y * size - dot / 2, width: dot, height: dot)

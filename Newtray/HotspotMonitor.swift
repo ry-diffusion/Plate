@@ -65,9 +65,7 @@ final class HotspotMonitor {
         }
         pathMonitor.pathUpdateHandler = { [weak self] path in
             let usingHotspot = path.status == .satisfied && path.isExpensive
-            DispatchQueue.main.async {
-                MainActor.assumeIsolated { self?.isUsingHotspot = usingHotspot }
-            }
+            onMainRunLoop { [weak self] in self?.isUsingHotspot = usingHotspot }
         }
         pathMonitor.start(queue: .global(qos: .utility))
         start()
@@ -138,9 +136,7 @@ private final class SessionDelegate: NSObject {
             return (device, object)
         }
         nonisolated(unsafe) let found = parsed
-        DispatchQueue.main.async {
-            MainActor.assumeIsolated { self.onUpdate?(found) }
-        }
+        onMainRunLoop { self.onUpdate?(found) }
     }
 }
 
