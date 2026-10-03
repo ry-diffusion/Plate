@@ -1,6 +1,6 @@
 //
 //  NetworkMonitor.swift
-//  Newtray
+//  Plate
 //
 //  Wi-Fi and Ethernet state for the menu: which interface is carrying traffic,
 //  the current Wi-Fi network and signal, nearby networks and joining them.

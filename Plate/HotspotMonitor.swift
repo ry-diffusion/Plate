@@ -1,6 +1,6 @@
 //
 //  HotspotMonitor.swift
-//  Newtray
+//  Plate
 //
 //  Reads the iPhone's Instant Hotspot data (cellular network type, signal bars
 //  and battery) through the private SFRemoteHotspotSession API
@@ -105,7 +105,7 @@ final class HotspotMonitor {
     /// does, and returns the network to join.
     func enableHotspot(on device: HotspotDevice) async throws -> HotspotCredentials {
         guard let session, let target = sharingDevices[device.id] else {
-            throw NSError(domain: "Newtray", code: 1)
+            throw NSError(domain: "Plate", code: 1)
         }
         let selector = NSSelectorFromString("enableHotspotForDevice:withCompletionHandler:")
         return try await withCheckedThrowingContinuation { continuation in
@@ -117,7 +117,7 @@ final class HotspotMonitor {
                 } else if let info = info as? NSObject, let ssid = info.value(forKey: "name") as? String {
                     continuation.resume(returning: HotspotCredentials(ssid: ssid, password: info.value(forKey: "password") as? String))
                 } else {
-                    continuation.resume(throwing: NSError(domain: "Newtray", code: 2))
+                    continuation.resume(throwing: NSError(domain: "Plate", code: 2))
                 }
             }
             session.perform(selector, with: target, with: completion)

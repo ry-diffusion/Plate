@@ -1,6 +1,6 @@
 //
 //  MainRunLoop.swift
-//  Newtray
+//  Plate
 //
 //  Delivers work to the main thread in the run loop's common modes. While a
 //  menu is open, the main run loop runs in event-tracking mode and doesn't get

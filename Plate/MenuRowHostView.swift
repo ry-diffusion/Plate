@@ -1,6 +1,6 @@
 //
 //  MenuRowHostView.swift
-//  Newtray
+//  Plate
 //
 //  Hosts a SwiftUI row inside an NSMenuItem with the menu's own highlight:
 //  NSMenu tracks which item is highlighted (mouse and keyboard), and this view

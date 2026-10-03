@@ -1,6 +1,6 @@
 //
-//  NewtrayApp.swift
-//  Newtray
+//  PlateApp.swift
+//  Plate
 //
 //  Created by Moizes Sousa on 01/10/26.
 //
@@ -8,7 +8,7 @@
 import SwiftUI
 
 @main
-struct NewtrayApp: App {
+struct PlateApp: App {
     @NSApplicationDelegateAdaptor private var appDelegate: AppDelegate
 
     var body: some Scene {

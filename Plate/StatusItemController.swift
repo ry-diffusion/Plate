@@ -1,6 +1,6 @@
 //
 //  StatusItemController.swift
-//  Newtray
+//  Plate
 //
 //  NSStatusItem that stands in for the system network menu: the iPhone's
 //  signal while the Mac is on its hotspot, Wi-Fi or Ethernet otherwise, and a
@@ -493,10 +493,10 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         menu.addItem(settings)
 
         menu.addItem(.separator())
-        let appItem = NSMenuItem(title: "Newtray", action: nil, keyEquivalent: "")
+        let appItem = NSMenuItem(title: "Plate", action: nil, keyEquivalent: "")
         appItem.submenu = appMenu()
         menu.addItem(appItem)
-        menu.addItem(NSMenuItem(title: String(localized: "Quit Newtray", comment: "Menu: quit the app"),
+        menu.addItem(NSMenuItem(title: String(localized: "Quit Plate", comment: "Menu: quit the app"),
                                 action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
     }
 

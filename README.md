@@ -1,8 +1,8 @@
-# Newtray
+# Plate
 
 A macOS menu bar app that replaces the system Wi-Fi menu: it shows Wi-Fi, Ethernet and your iPhone's Instant Hotspot (signal, cellular network type like 5G/LTE, and battery), lists nearby networks and joins them.
 
-In the menu bar, the item shows the connection in use: Wi-Fi arcs with the signal, an Ethernet glyph, or Wi-Fi off. While the Mac is on the iPhone's hotspot it shows the iPhone's cellular signal instead, in one of two styles, picked under *Newtray › Menu Bar Style*:
+In the menu bar, the item shows the connection in use: Wi-Fi arcs with the signal, an Ethernet glyph, or Wi-Fi off. While the Mac is on the iPhone's hotspot it shows the iPhone's cellular signal instead, in one of two styles, picked under *Plate › Menu Bar Style*:
 
 - **iPhone Duo** (default), after the iPhone Duo's circular status icon: an open ring for the iPhone battery, the network type (5G/LTE) in the center and 4 dots in the ring's opening for the signal. Off the hotspot, the center shows the Personal Hotspot glyph.
 - **Classic**: signal bars with the network type beside them and the battery marks below.
@@ -24,8 +24,8 @@ When no iPhone is found, both styles show short faint bars (or faint dots), like
 - **Signal bars** (0–4) and **network type** of the iPhone, updated as the iPhone advertises changes.
 - **iPhone battery** (optional, off by default): the ring in the iPhone Duo style, or a row of 4 marks under the bars in the Classic style (a full quarter is a segment as wide as its bar, an empty one a small faint dot). Works in both automatic and manual modes. No percentage: the iPhone only advertises its battery in quarters (0, 25, 50, 75, 100).
 - **Automatic mode** (default): signal bars always; the network label (5G/LTE) only shows while the Mac is using the iPhone's hotspot.
-- **Manual mode**: pick what shows on the hotspot under *Newtray* (signal bars, network type).
-- The iPhone's marketing model name (`iPhone18,1` → *iPhone 17 Pro*). The *Newtray* submenu also has **Refresh** (⌘R), and **Quit Newtray** (⌘Q) sits at the bottom.
+- **Manual mode**: pick what shows on the hotspot under *Plate* (signal bars, network type).
+- The iPhone's marketing model name (`iPhone18,1` → *iPhone 17 Pro*). The *Plate* submenu also has **Refresh** (⌘R), and **Quit Plate** (⌘Q) sits at the bottom.
 - **Open at Login** (on by default, toggle in the menu) via `SMAppService`.
 - No Dock icon (`LSUIElement`).
 - Localized in English and Brazilian Portuguese (String Catalog).
@@ -70,8 +70,8 @@ When no iPhone is found, both styles show short faint bars (or faint dots), like
 ## Project layout
 
 ```
-Newtray/
-├── NewtrayApp.swift            # App + AppDelegate (no windows)
+Plate/
+├── PlateApp.swift            # App + AppDelegate (no windows)
 ├── StatusItemController.swift  # NSStatusItem, menu and display options
 ├── NetworkMonitor.swift        # Wi-Fi (CoreWLAN), Ethernet, Location, scanning and joining
 ├── NetworkMenuViews.swift      # Custom menu rows (SwiftUI): Wi-Fi switch, network rows, cellular status
@@ -85,8 +85,8 @@ Newtray/
 
 ## Building
 
-Open `Newtray.xcodeproj` in Xcode and run the **Newtray** scheme, or:
+Open `Plate.xcodeproj` in Xcode and run the **Plate** scheme, or:
 
 ```bash
-xcodebuild -project Newtray.xcodeproj -scheme Newtray -configuration Release build
+xcodebuild -project Plate.xcodeproj -scheme Plate -configuration Release build
 ```

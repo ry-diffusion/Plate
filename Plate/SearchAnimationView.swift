@@ -1,6 +1,6 @@
 //
 //  SearchAnimationView.swift
-//  Newtray
+//  Plate
 //
 //  The iPhone's "searching for network" animation, drawn over the menu bar
 //  item's static no-service glyph. Core Animation runs it in the render server,

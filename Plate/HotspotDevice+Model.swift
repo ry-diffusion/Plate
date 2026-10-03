@@ -1,6 +1,6 @@
 //
 //  HotspotDevice+Model.swift
-//  Newtray
+//  Plate
 //
 //  Marketing name and icon for the device from its model identifier
 //  ("iPhone18,1" → "iPhone 17 Pro"), using the UTIs that macOS CoreTypes

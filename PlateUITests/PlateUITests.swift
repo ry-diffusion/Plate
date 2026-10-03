@@ -1,13 +1,13 @@
 //
-//  NewtrayUITests.swift
-//  NewtrayUITests
+//  PlateUITests.swift
+//  PlateUITests
 //
 //  Created by Moizes Sousa on 01/10/26.
 //
 
 import XCTest
 
-final class NewtrayUITests: XCTestCase {
+final class PlateUITests: XCTestCase {
 
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.

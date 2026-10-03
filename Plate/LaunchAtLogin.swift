@@ -1,8 +1,8 @@
 //
 //  LaunchAtLogin.swift
-//  Newtray
+//  Plate
 //
-//  Opens Newtray at login through SMAppService (it shows up under System
+//  Opens Plate at login through SMAppService (it shows up under System
 //  Settings › General › Login Items).
 //
 
@@ -22,7 +22,7 @@ enum LaunchAtLogin {
                 try SMAppService.mainApp.unregister()
             }
         } catch {
-            NSLog("Newtray: couldn't \(enabled ? "register" : "unregister") the login item: \(error)")
+            NSLog("Plate: couldn't \(enabled ? "register" : "unregister") the login item: \(error)")
         }
     }
 

@@ -313,14 +313,14 @@
         }
       }
     },
-    "Quit Newtray" : {
+    "Quit Plate" : {
       "comment" : "Menu: quit the app",
       "extractionState" : "manual",
       "localizations" : {
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Sair do Newtray"
+            "value" : "Sair do Plate"
           }
         }
       }

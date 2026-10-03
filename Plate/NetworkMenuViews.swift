@@ -1,6 +1,6 @@
 //
 //  NetworkMenuViews.swift
-//  Newtray
+//  Plate
 //
 //  Custom rows for the network menu: the Wi-Fi switch and section headers.
 //
