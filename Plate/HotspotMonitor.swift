@@ -10,6 +10,7 @@
 import Foundation
 import Network
 import Observation
+import os
 
 struct HotspotDevice: Equatable, Identifiable {
     let id: String
@@ -55,7 +56,10 @@ final class HotspotMonitor {
     private var sharingDevices: [String: NSObject] = [:]
     private let delegate = SessionDelegate()
     private var refreshTimer: Timer?
-    private let pathMonitor = NWPathMonitor()
+    /// Watches the Wi-Fi interface itself rather than the default path: with a
+    /// VPN or a tunnel like Kakera's "route all apps" on top, the default path
+    /// goes through the tunnel and loses the hotspot's "expensive" flag.
+    private let pathMonitor = NWPathMonitor(requiredInterfaceType: .wifi)
 
     init() {
         delegate.onUpdate = { [weak self] found in
@@ -109,13 +113,24 @@ final class HotspotMonitor {
         }
         let selector = NSSelectorFromString("enableHotspotForDevice:withCompletionHandler:")
         return try await withCheckedThrowingContinuation { continuation in
-            // -enableHotspotForDevice:withCompletionHandler: replies with an
-            // SFRemoteHotspotInfo (name, password, channel) or an error.
-            let completion: @convention(block) (AnyObject?, NSError?) -> Void = { info, error in
-                if let error {
+            // The session replies once, on a background queue, with the hotspot's
+            // network name and password as two strings, or with an error in the
+            // second slot. (The XPC protocol underneath uses an
+            // SFRemoteHotspotInfo object instead, so that shape is accepted too.)
+            // Nothing is assumed about the types: a wrong guess used to crash here.
+            let resumed = OSAllocatedUnfairLock(initialState: false)
+            let completion: @convention(block) (AnyObject?, AnyObject?) -> Void = { first, second in
+                guard resumed.withLock({ done in defer { done = true }; return !done }) else { return }
+                if let error = second as? NSError ?? first as? NSError {
                     continuation.resume(throwing: error)
-                } else if let info = info as? NSObject, let ssid = info.value(forKey: "name") as? String {
-                    continuation.resume(returning: HotspotCredentials(ssid: ssid, password: info.value(forKey: "password") as? String))
+                } else if let ssid = first as? String {
+                    continuation.resume(returning: HotspotCredentials(ssid: ssid, password: second as? String))
+                } else if let info = first as? NSObject,
+                          info.responds(to: NSSelectorFromString("name")),
+                          let ssid = info.value(forKey: "name") as? String {
+                    let password = info.responds(to: NSSelectorFromString("password"))
+                        ? info.value(forKey: "password") as? String : nil
+                    continuation.resume(returning: HotspotCredentials(ssid: ssid, password: password))
                 } else {
                     continuation.resume(throwing: NSError(domain: "Plate", code: 2))
                 }

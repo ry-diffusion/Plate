@@ -421,6 +421,18 @@
         }
       }
     },
+    "via VPN" : {
+      "comment" : "Menu: traffic goes through a VPN or tunnel",
+      "extractionState" : "manual",
+      "localizations" : {
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "via VPN"
+          }
+        }
+      }
+    },
     "Wi-Fi" : {
       "comment" : "Network interface name",
       "extractionState" : "manual",

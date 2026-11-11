@@ -120,7 +120,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         let devices = monitor.devices.map { "\($0.id)\($0.signalBars)\($0.networkType)\($0.batteryQuarters)" }.joined(separator: ",")
         return [String(network.wifiPowerOn), network.currentSSID ?? "", String(WiFiNetwork.bars(rssi: network.wifiRSSI)),
                 String(network.isWiFiAssociated), String(network.isScanning), String(describing: network.connection),
-                network.primaryAddress ?? "", String(network.locationStatus.rawValue), String(monitor.isUsingHotspot),
+                network.primaryAddress ?? "", String(network.isThroughVPN), String(network.locationStatus.rawValue), String(monitor.isUsingHotspot),
                 networks, devices].joined(separator: "|")
     }
 
@@ -418,7 +418,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         if network.isWiFiAssociated {
             let name = network.currentSSID ?? String(localized: "Wi-Fi", comment: "Network interface name")
             menu.addItem(hostedItem(NetworkRowView(name: name, level: Double(WiFiNetwork.bars(rssi: network.wifiRSSI)) / 3,
-                                                   isCurrent: true)))
+                                                   detail: vpnDetail, isCurrent: true)))
         }
         if !network.hasLocationAccess {
             // Without Location, macOS hides every network name.
@@ -482,9 +482,10 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         guard network.connection == .ethernet else { return }
         menu.addItem(.sectionHeader(title: String(localized: "Ethernet", comment: "Network interface name")))
         let detail = [network.primaryInterface, network.primaryAddress].compactMap { $0 }.joined(separator: " · ")
+        let ethernetDetail = [detail.isEmpty ? nil : detail, vpnDetail].compactMap { $0 }.joined(separator: " · ")
         menu.addItem(hostedItem(NetworkRowView(name: String(localized: "Connected", comment: "Menu: the Mac is using this network"),
                                                symbol: "rectangle.connected.to.line.below",
-                                               detail: detail.isEmpty ? nil : detail, isCurrent: true)))
+                                               detail: ethernetDetail.isEmpty ? nil : ethernetDetail, isCurrent: true)))
     }
 
     /// System settings, then the app's own options tucked into a submenu.
@@ -542,6 +543,11 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         refresh.target = self
         menu.addItem(refresh)
         return menu
+    }
+
+    /// "via VPN" under the current network while a tunnel carries the traffic.
+    private var vpnDetail: String? {
+        network.isThroughVPN ? String(localized: "via VPN", comment: "Menu: traffic goes through a VPN or tunnel") : nil
     }
 
     // MARK: - Menu items

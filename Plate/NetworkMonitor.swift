@@ -51,6 +51,8 @@ final class NetworkMonitor: NSObject {
     /// BSD name and IPv4 address of the interface carrying traffic.
     private(set) var primaryInterface: String?
     private(set) var primaryAddress: String?
+    /// A VPN or tunnel (utun) is carrying the traffic on top of the connection.
+    private(set) var isThroughVPN = false
 
     private(set) var wifiPowerOn = false
     private(set) var currentSSID: String?
@@ -87,21 +89,23 @@ final class NetworkMonitor: NSObject {
         refreshWiFi()
 
         pathMonitor.pathUpdateHandler = { [weak self] path in
-            let connection: Connection
-            if path.status != .satisfied {
-                connection = .none
-            } else if path.usesInterfaceType(.wiredEthernet) {
-                connection = .ethernet
-            } else if path.usesInterfaceType(.wifi) {
-                connection = .wifi
-            } else {
-                connection = .other
+            // Decided by the physical interface, skipping tunnels: with a VPN or
+            // a tunnel like Kakera's "route all apps", the path prefers a utun
+            // interface (type .other) that sits on top of the Wi-Fi or Ethernet
+            // actually carrying the traffic.
+            let physical = path.availableInterfaces.first { $0.type == .wifi || $0.type == .wiredEthernet }
+            let connection: Connection = switch (path.status, physical?.type) {
+            case (.satisfied, .wiredEthernet?): .ethernet
+            case (.satisfied, .wifi?): .wifi
+            case (.satisfied, _): .other
+            default: .none
             }
-            // The first available interface is the one the path prefers.
-            let name = path.availableInterfaces.first { $0.type != .other }?.name
+            let throughTunnel = path.status == .satisfied && path.availableInterfaces.first?.type == .other
+            let name = physical?.name
             onMainRunLoop { [weak self] in
                 guard let self else { return }
                 self.connection = connection
+                self.isThroughVPN = throughTunnel
                 self.primaryInterface = name
                 self.primaryAddress = name.flatMap(Self.ipv4Address(of:))
                 self.refreshWiFi()
